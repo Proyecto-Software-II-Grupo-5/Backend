@@ -55,7 +55,8 @@ app.get('/auth/callback', async (req, res) => {
     // Redirige al frontend con el token en los parámetros de la URL
     res.redirect(`https://marketgog5.netlify.app/main?token=${id_token}`);
   } catch (error) {
-    console.error('Error en la autenticación:', error);
+    // Log del error
+    console.error('Error en el intercambio de tokens:', error.response?.data || error.message || error);
     res.status(500).send('Error en la autenticación');
   }
 });
