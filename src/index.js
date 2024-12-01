@@ -5,8 +5,20 @@ const admin = require('firebase-admin');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
+// Validar variables de entorno requeridas
+if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+  console.error('Error: Faltan las variables de entorno GOOGLE_CLIENT_ID o GOOGLE_CLIENT_SECRET');
+  process.exit(1);
+}
+
 // Inicializar Firebase Admin SDK
-const serviceAccount = require('/etc/secrets/serviceAccountKey.json', 'utf8'); // Tu archivo JSON con las credenciales
+let serviceAccount;
+try {
+  serviceAccount = require('/etc/secrets/serviceAccountKey.json');
+} catch (error) {
+  console.error('Error al cargar el archivo de credenciales de Firebase:', error.message);
+  process.exit(1);
+}
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -47,17 +59,28 @@ app.get('/auth/callback', async (req, res) => {
 
     const { id_token } = tokenResponse.data;
 
-    // Opcional: Decodifica el token si necesitas datos del usuario
+    // Decodificar el token si es necesario
     const decodedToken = await admin.auth().verifyIdToken(id_token);
-
     console.log('Usuario autenticado:', decodedToken);
 
-    // Redirige al frontend con el token en los parámetros de la URL
+    // Redirigir al frontend con el token en los parámetros de la URL
     res.redirect(`https://marketgog5.netlify.app/main?token=${id_token}`);
   } catch (error) {
-    // Log del error
     console.error('Error en el intercambio de tokens:', error.response?.data || error.message || error);
+
+    // Mostrar las credenciales usadas solo en entorno de desarrollo
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Credenciales utilizadas:', {
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET ? 'Configurado' : 'No configurado',
+      });
+    }
+
     res.status(500).send('Error en la autenticación');
   }
 });
-app.listen(PORT, () => { console.log(`Servidor corriendo en el puerto ${PORT}`); });
+
+// Servidor escuchando en el puerto configurado
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en el puerto ${PORT}`);
+});
