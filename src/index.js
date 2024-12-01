@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { google } = require('google-auth-library');
+const { OAuth2Client } = require('google-auth-library');
 const admin = require('firebase-admin');
 require('dotenv').config();
 
@@ -9,13 +9,14 @@ admin.initializeApp({
   credential: admin.credential.cert(require('/etc/secrets/serviceAccountKey.json')),
 });
 
+// Crear aplicación Express
 const app = express();
 
 // Configurar CORS
 app.use(cors({ origin: process.env.FRONTEND_URL }));
 
 // Configurar cliente de Google OAuth2
-const client = new google.auth.OAuth2(
+const client = new OAuth2Client(
   process.env.CLIENT_ID,
   process.env.CLIENT_SECRET,
   `${process.env.BACKEND_URL}/auth/google/callback`
@@ -66,7 +67,7 @@ app.get('/auth/google/callback', async (req, res) => {
     // Redirigir al frontend con el UID del usuario
     res.redirect(`${process.env.FRONTEND_URL}/main?user=${user.uid}`);
   } catch (error) {
-    console.error(error);
+    console.error('Error during authentication:', error);
     res.status(500).send('Error during authentication');
   }
 });
