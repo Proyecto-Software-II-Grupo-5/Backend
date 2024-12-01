@@ -1,70 +1,78 @@
 const express = require('express');
-const { OAuth2Client } = require('google-auth-library');
+const cors = require('cors');
+const { google } = require('google-auth-library');
 const admin = require('firebase-admin');
+require('dotenv').config();
+
+// Inicializar Firebase Admin SDK
+admin.initializeApp({
+  credential: admin.credential.cert(require('/etc/secrets/serviceAccountKey.json')),
+});
+
 const app = express();
 
-// Inicializar Firebase Admin
-const serviceAccount = require('/etc/secrets/serviceAccountKey.json');
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
+// Configurar CORS
+app.use(cors({ origin: process.env.FRONTEND_URL }));
 
-const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const client = new OAuth2Client(CLIENT_ID);
+// Configurar cliente de Google OAuth2
+const client = new google.auth.OAuth2(
+  process.env.CLIENT_ID,
+  process.env.CLIENT_SECRET,
+  `${process.env.BACKEND_URL}/auth/google/callback`
+);
 
-// Ruta para iniciar OAuth
+// Ruta para redirigir al autenticador de Google
 app.get('/auth/google', (req, res) => {
-  const redirectUri = 'https://backend-marketgo.onrender.com/auth/google/callback';
-  const authUrl = client.generateAuthUrl({
+  const url = client.generateAuthUrl({
     access_type: 'offline',
-    scope: ['profile', 'email'],
-    redirect_uri: redirectUri,
+    scope: ['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'],
   });
-  res.redirect(authUrl);
+  res.redirect(url);
 });
 
-// Ruta para manejar el callback
+// Ruta para manejar el callback y autenticación en Firebase
 app.get('/auth/google/callback', async (req, res) => {
-  const code = req.query.code;
-  const redirectUri = 'https://backend-marketgo.onrender.com/auth/google/callback';
-
   try {
-    const { tokens } = await client.getToken({ code, redirect_uri: redirectUri });
+    const code = req.query.code;
+
+    // Intercambiar el código por tokens
+    const { tokens } = await client.getToken(code);
     client.setCredentials(tokens);
 
+    // Verificar el ID Token
     const ticket = await client.verifyIdToken({
       idToken: tokens.id_token,
-      audience: CLIENT_ID,
+      audience: process.env.CLIENT_ID,
     });
 
     const payload = ticket.getPayload();
-    const email = payload.email;
+    const { email, name } = payload;
 
-    // Verificar si el usuario ya existe en Firebase
-    let userRecord;
+    // Registrar o autenticar usuario en Firebase
+    let user;
     try {
-      userRecord = await admin.auth().getUserByEmail(email);
+      user = await admin.auth().getUserByEmail(email);
     } catch (error) {
       if (error.code === 'auth/user-not-found') {
-        // Crear un nuevo usuario
-        userRecord = await admin.auth().createUser({
+        user = await admin.auth().createUser({
           email,
-          displayName: payload.name,
-          photoURL: payload.picture,
+          displayName: name,
         });
       } else {
         throw error;
       }
     }
 
-    // Redirigir al frontend con un token o mensaje
-    const token = await admin.auth().createCustomToken(userRecord.uid);
-    res.redirect(`https://marketgog5.netlify.app/success?token=${token}`);
+    // Redirigir al frontend con el UID del usuario
+    res.redirect(`${process.env.FRONTEND_URL}/main?user=${user.uid}`);
   } catch (error) {
-    console.error('Error during Google OAuth:', error);
-    res.redirect('https://marketgog5.netlify.app/error');
+    console.error(error);
+    res.status(500).send('Error during authentication');
   }
 });
 
+// Iniciar el servidor
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
