@@ -59,3 +59,4 @@ app.get('/auth/callback', async (req, res) => {
     res.status(500).send('Error en la autenticación');
   }
 });
+app.listen(PORT, () => { console.log(`Servidor corriendo en el puerto ${PORT}`); });
