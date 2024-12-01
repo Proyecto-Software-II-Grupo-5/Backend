@@ -28,6 +28,7 @@ app.get('/auth', (req, res) => {
 });
 
 // Ruta de callback
+// Ruta de callback
 app.get('/auth/callback', async (req, res) => {
   const { code } = req.query;
 
@@ -36,26 +37,24 @@ app.get('/auth/callback', async (req, res) => {
   }
 
   try {
-    // Intercambia el código por un token
     const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', {
       code,
       client_id: process.env.GOOGLE_CLIENT_ID,
       client_secret: process.env.GOOGLE_CLIENT_SECRET,
-      redirect_uri: `https://backend-marketgo.onrender.com/auth/callback`,
+      redirect_uri: 'https://backend-marketgo.onrender.com/auth/callback',
       grant_type: 'authorization_code',
     });
 
     const { id_token } = tokenResponse.data;
-
-    // Opcional: Decodifica el token si necesitas datos del usuario
     const decodedToken = await admin.auth().verifyIdToken(id_token);
 
-    console.log('Usuario autenticado:', decodedToken);
-
-    // Redirige al frontend con el token en los parámetros de la URL
-    res.redirect(`https://marketgog5.netlify.app/main?token=${id_token}`);
+    res.status(200).json({ user: decodedToken });
   } catch (error) {
     console.error('Error en la autenticación:', error);
     res.status(500).send('Error en la autenticación');
   }
+});
+
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
