@@ -17,7 +17,7 @@ app.use(cors());
 app.use('/verifyToken', verifyToken);
 app.use('/registerUser', registerUser);
 app.use('/signin', iniciarSesion);
-app.use('/buscarProductoPorNombre', buscarProductoPorNombre);
+app.use('/autosuggest', buscarProductoPorNombre);
 
 // Ruta básica para verificar que el servidor está corriendo
 app.get('/', (req, res) => {
