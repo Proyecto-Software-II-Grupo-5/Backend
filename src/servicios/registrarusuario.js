@@ -4,7 +4,9 @@ const axios = require('axios');
 const admin = require('firebase-admin');
 const comprobarUsuario = require('./comprobarusuario');
 
-router.get('/', (req, res) => { res.send('El servicio de iniciar sesión está funcionando correctamente.'); });
+router.get('/', (req, res) => {
+  res.send('El servicio de registrar usuario está funcionando correctamente.');
+});
 
 router.post('/', async (req, res) => {
   const { idToken } = req.body;
@@ -28,10 +30,10 @@ router.post('/', async (req, res) => {
     } else {
       // Registrar el usuario
       const db = admin.firestore();
-      const userRef = db.collection('usuarios').doc(uid);
+      const userRef = db.collection('usuario').doc(uid);
 
       await userRef.set({ name, email, picture });
-      return res.status(200).send({ isValid: true, mensaje: 'Usuario registrado exitosamente' });
+      return res.status(200).send({ isValid: true, mensaje: 'Usuario registrado exitosamente', usuario: { name, email, picture } });
     }
   } catch (error) {
     console.error('Error en el proceso de registro:', error);
@@ -40,4 +42,3 @@ router.post('/', async (req, res) => {
 });
 
 module.exports = router;
-

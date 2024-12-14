@@ -2,9 +2,12 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const comprobarUsuario = require('./comprobarusuario');
+const admin = require('firebase-admin');
 
+router.get('/', (req, res) => { 
+  res.send('El servicio de iniciar sesión está funcionando correctamente.'); 
+});
 
-router.get('/', (req, res) => { res.send('El servicio de iniciar sesión está funcionando correctamente.'); });
 router.post('/', async (req, res) => {
   const { idToken } = req.body;
 
@@ -23,9 +26,28 @@ router.post('/', async (req, res) => {
     const usuarioExiste = await comprobarUsuario(uid);
 
     if (usuarioExiste) {
-      return res.status(200).send({ isValid: true, mensaje: 'El usuario ya existe' });
+      // Recuperar los datos del usuario desde Firebase
+      const db = admin.firestore();
+      const userRef = db.collection('usuario').doc(uid);
+      const doc = await userRef.get();
+      
+      if (doc.exists) {
+        const userData = doc.data();
+        return res.status(200).send({ 
+          isValid: true, 
+          mensaje: 'El usuario ya existe', 
+          usuario: userData 
+        });
+      } else {
+        return res.status(500).send({ 
+          error: 'Error al recuperar datos del usuario' 
+        });
+      }
     } else {
-      return res.status(200).send({ isValid: false, mensaje: 'El usuario no existe' });
+      return res.status(200).send({ 
+        isValid: false, 
+        mensaje: 'El usuario no existe' 
+      });
     }
   } catch (error) {
     console.error('Error en el proceso de inicio de sesión:', error);

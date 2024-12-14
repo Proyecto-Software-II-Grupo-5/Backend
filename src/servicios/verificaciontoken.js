@@ -1,11 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const admin = require('firebase-admin');
-const serviceAccount = require('/etc/secrets/serviceAccountKey.json');
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
+const admin = require('../firebase'); // Importa la configuración de Firebase desde firebase.js
 
 router.post('/', async (req, res) => {
   const idToken = req.body.idToken;
@@ -27,4 +22,3 @@ router.post('/', async (req, res) => {
 });
 
 module.exports = router;
-

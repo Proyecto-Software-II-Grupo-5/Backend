@@ -1,21 +1,23 @@
 const express = require('express');
 const app = express();
-const cors = require('cors'); 
+const cors = require('cors');
 const port = 3000;
 
 // Importa los servicios
 const verifyToken = require('./servicios/verificaciontoken');
 const registerUser = require('./servicios/registrarusuario');
 const iniciarSesion = require('./servicios/iniciarsesion');
+const buscarProductoPorNombre = require('./servicios/buscarproductonombre'); // Importa el servicio de búsqueda por nombre
 
 // Middleware para analizar el cuerpo de las solicitudes en formato JSON
 app.use(express.json());
 app.use(cors());
 
-// Usa los servicio
+// Usa los servicios
 app.use('/verifyToken', verifyToken);
 app.use('/registerUser', registerUser);
 app.use('/signin', iniciarSesion);
+app.use('/buscarProductoPorNombre', buscarProductoPorNombre);
 
 // Ruta básica para verificar que el servidor está corriendo
 app.get('/', (req, res) => {
