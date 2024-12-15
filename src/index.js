@@ -8,6 +8,7 @@ const verifyToken = require('./servicios/verificaciontoken');
 const registerUser = require('./servicios/registrarusuario');
 const iniciarSesion = require('./servicios/iniciarsesion');
 const buscarProductoPorNombre = require('./servicios/buscarproductonombre'); // Importa el servicio de búsqueda por nombre
+const buscarProducto = require('./servicios/buscarproducto'); // Importa el nuevo servicio de búsqueda de producto
 
 // Middleware para analizar el cuerpo de las solicitudes en formato JSON
 app.use(express.json());
@@ -18,6 +19,7 @@ app.use('/verifyToken', verifyToken);
 app.use('/registerUser', registerUser);
 app.use('/signin', iniciarSesion);
 app.use('/autosuggest', buscarProductoPorNombre);
+app.use('/buscarproducto', buscarProducto); // Usa el nuevo servicio
 
 // Ruta básica para verificar que el servidor está corriendo
 app.get('/', (req, res) => {
