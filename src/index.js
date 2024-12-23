@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const compression = require('compression');
 const port = 3000;
 
 // Importa los servicios
@@ -13,6 +14,7 @@ const buscarProducto = require('./servicios/buscarproducto'); // Importa el nuev
 // Middleware para analizar el cuerpo de las solicitudes en formato JSON
 app.use(express.json());
 app.use(cors());
+app.use(compression());
 
 // Usa los servicios
 app.use('/verifyToken', verifyToken);
