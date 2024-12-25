@@ -1,20 +1,27 @@
 const express = require('express');
-const app = express();
+const helmet = require('helmet');
 const cors = require('cors');
 const compression = require('compression');
+const app = express();
 const port = 3000;
+
+// Configurar encabezados de seguridad con Helmet
+app.use(
+  helmet({
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' }, // Permite popups sin romper la seguridad
+  })
+);
 
 // Configurar CORS
 const corsOptions = {
-  origin: ['https://marketgog5.netlify.app'], // Origen permitido
+  origin: ['https://marketgog5.netlify.app'], // Orígenes permitidos
   methods: ['GET', 'POST', 'PUT', 'DELETE'], // Métodos permitidos
-  allowedHeaders: ['Content-Type', 'Authorization'], // Headers permitidos
-  credentials: true, // Si necesitas enviar cookies o credenciales
+  allowedHeaders: ['Content-Type', 'Authorization'], // Encabezados permitidos
+  credentials: true,
 };
+app.use(cors(corsOptions));
 
-app.use(cors(corsOptions)); // Aplica las opciones de CORS
-
-// Middleware para analizar el cuerpo de las solicitudes en formato JSON
+// Otros middlewares
 app.use(express.json());
 app.use(compression());
 
