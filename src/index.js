@@ -4,17 +4,26 @@ const cors = require('cors');
 const compression = require('compression');
 const port = 3000;
 
+// Configurar CORS
+const corsOptions = {
+  origin: ['https://marketgog5.netlify.app'], // Origen permitido
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Métodos permitidos
+  allowedHeaders: ['Content-Type', 'Authorization'], // Headers permitidos
+  credentials: true, // Si necesitas enviar cookies o credenciales
+};
+
+app.use(cors(corsOptions)); // Aplica las opciones de CORS
+
+// Middleware para analizar el cuerpo de las solicitudes en formato JSON
+app.use(express.json());
+app.use(compression());
+
 // Importa los servicios
 const verifyToken = require('./servicios/verificaciontoken');
 const registerUser = require('./servicios/registrarusuario');
 const iniciarSesion = require('./servicios/iniciarsesion');
 const buscarProductoPorNombre = require('./servicios/buscarproductonombre'); // Importa el servicio de búsqueda por nombre
 const buscarProducto = require('./servicios/buscarproducto'); // Importa el nuevo servicio de búsqueda de producto
-
-// Middleware para analizar el cuerpo de las solicitudes en formato JSON
-app.use(express.json());
-app.use(cors());
-app.use(compression());
 
 // Usa los servicios
 app.use('/verifyToken', verifyToken);
