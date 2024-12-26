@@ -1,18 +1,10 @@
 const admin = require('firebase-admin');
 
 const verificarYRegistrarUsuario = async (idToken, registrar = false) => {
-  const cache = new Map();
-
   try {
-    let decodedToken;
-    if (cache.has(idToken)) {
-      decodedToken = cache.get(idToken);
-    } else {
-      decodedToken = await admin.auth().verifyIdToken(idToken);
-      cache.set(idToken, decodedToken);
-    }
-
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
     const { uid, name, email, picture } = decodedToken;
+
     const db = admin.firestore();
     const userRef = db.collection('usuario').doc(uid);
     const userDoc = await userRef.get();
@@ -43,3 +35,5 @@ const verificarYRegistrarUsuario = async (idToken, registrar = false) => {
     throw new Error('Error interno del servidor');
   }
 };
+
+module.exports = verificarYRegistrarUsuario;
