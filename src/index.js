@@ -44,7 +44,6 @@ app.set('etag', 'strong'); // Configura ETag para cacheo
 
 
 // Usa los servicios
-app.use('/verifyToken', verifyToken);
 app.use('/registerUser', registerUser);
 app.use('/signin', iniciarSesion);
 app.use('/autosuggest', buscarProductoPorNombre);
