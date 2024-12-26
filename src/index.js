@@ -26,7 +26,6 @@ app.use(express.json());
 app.use(compression());
 
 // Importa los servicios
-const verifyToken = require('./servicios/verificaciontoken');
 const registerUser = require('./servicios/registrarusuario');
 const iniciarSesion = require('./servicios/iniciarsesion');
 const buscarProductoPorNombre = require('./servicios/buscarproductonombre'); // Importa el servicio de búsqueda por nombre
