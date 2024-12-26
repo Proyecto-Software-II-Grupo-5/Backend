@@ -32,6 +32,18 @@ const iniciarSesion = require('./servicios/iniciarsesion');
 const buscarProductoPorNombre = require('./servicios/buscarproductonombre'); // Importa el servicio de búsqueda por nombre
 const buscarProducto = require('./servicios/buscarproducto'); // Importa el nuevo servicio de búsqueda de producto
 
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+      const duration = Date.now() - start;
+      console.log(`[${req.method}] ${req.originalUrl} - ${duration}ms`);
+  });
+  next();
+});
+
+app.set('etag', 'strong'); // Configura ETag para cacheo
+
+
 // Usa los servicios
 app.use('/verifyToken', verifyToken);
 app.use('/registerUser', registerUser);
