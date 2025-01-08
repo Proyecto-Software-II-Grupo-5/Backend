@@ -33,7 +33,7 @@ const buscarProductoPorNombre = require('./servicios/buscarproductonombre'); // 
 const buscarProducto = require('./servicios/buscarproducto'); // Importa el nuevo servicio de búsqueda de producto
 const paymentRoutes = require('./servicios/payment.routes');
 // Middleware de rutas de pagos
-app.use(paymentRoutes);
+app.use('/payment', paymentRoutes);
 
 app.use((req, res, next) => {
   const start = Date.now();
