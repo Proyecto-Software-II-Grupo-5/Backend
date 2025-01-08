@@ -21,8 +21,8 @@ const createOrder = async (req, res) => {
             brand_name: "marketgo",
             landing_page: "NO_PREFERENCE",
             user_action: "PAY_NOW",
-            return_url: `https://backend-marketgo.onrender.com/capture-order`,
-            cancel_url: `https://backend-marketgo.onrender.com/cancel-order`,
+            return_url: `https://backend-marketgo.onrender.com/payment/capture-order`,
+            cancel_url: `https://backend-marketgo.onrender.com/payment/cancel-order`,
         }
     };
 
@@ -79,12 +79,25 @@ const captureOrder = async (req, res) => {
         });
 
         console.log('Orden capturada con éxito:', response.data);
-        return res.json({ status: 'COMPLETED', data: response.data });
+
+        // Devuelve una página que cierre la ventana emergente y notifique al frontend
+        res.send(`
+            <script>
+                window.opener.postMessage({ status: 'COMPLETED', data: ${JSON.stringify(response.data)} }, '*');
+                window.close();
+            </script>
+        `);
     } catch (error) {
         console.error('Error al capturar la orden:', error.response?.data || error.message);
-        return res.status(500).json({ error: 'Error al capturar la orden en PayPal' });
+        res.send(`
+            <script>
+                window.opener.postMessage({ status: 'FAILED', error: '${error.message}' }, '*');
+                window.close();
+            </script>
+        `);
     }
 };
+
 
 
 const cancelPayment = (req, res) => res.send('Pago cancelado');
