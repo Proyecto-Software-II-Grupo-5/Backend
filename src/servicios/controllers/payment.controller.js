@@ -54,12 +54,14 @@ const createOrder = async (req, res) => {
 
         console.log('Orden creada con éxito:', response.data);
 
+        const approveLink = response.data.links.find(link => link.rel === 'approve');
+
+        if (!approveLink) {
+            return res.status(500).json({ error: 'No se encontró la URL de aprobación de PayPal' });
+        }
+
         // Devuelve la respuesta completa para verificarla
-        return res.json({
-            message: 'Orden creada correctamente',
-            orderID: response.data.id,
-            details: response.data
-        });
+        return res.json({ approveUrl: approveLink.href });
     } catch (error) {
         console.error('Error al crear la orden:', error.response?.data || error.message);
         return res.status(500).json({ error: 'Error al crear la orden en PayPal' });
