@@ -4,6 +4,7 @@ const cors = require('cors');
 const compression = require('compression');
 const app = express();
 const port = 3000;
+ 
 
 // Configurar encabezados de seguridad con Helmet
 app.use(
@@ -30,6 +31,9 @@ const registerUser = require('./servicios/registrarusuario');
 const iniciarSesion = require('./servicios/iniciarsesion');
 const buscarProductoPorNombre = require('./servicios/buscarproductonombre'); // Importa el servicio de búsqueda por nombre
 const buscarProducto = require('./servicios/buscarproducto'); // Importa el nuevo servicio de búsqueda de producto
+const paymentRoutes = require('./servicios/payment.routes');
+// Middleware de rutas de pagos
+app.use(paymentRoutes);
 
 app.use((req, res, next) => {
   const start = Date.now();
