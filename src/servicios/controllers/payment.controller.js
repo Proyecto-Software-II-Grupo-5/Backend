@@ -80,17 +80,14 @@ const captureOrder = async (req, res) => {
 
         console.log('Orden capturada:', response.data);
 
-        // Devolver solo el estado y los datos necesarios
-        return res.json({
-            status: response.data.status,
-            payer: response.data.payer,
-            purchase_units: response.data.purchase_units
-        });
+        // Redirigir al home del frontend tras capturar la orden
+        return res.redirect('https://marketgog5.netlify.app/home');
     } catch (error) {
         console.error('Error al capturar la orden:', error.response?.data || error.message);
         return res.status(500).json({ error: 'Error al capturar la orden en PayPal' });
     }
 };
+
 
 
 
