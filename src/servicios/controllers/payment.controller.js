@@ -1,4 +1,5 @@
 const { application } = require("express");
+const admin = require('./firebase'); // Importar la configuración de Firebase
 const axios = require('axios');
 
 // Leer las variables de entorno desde process.env
@@ -71,6 +72,7 @@ const createOrder = async (req, res) => {
 const captureOrder = async (req, res) => {
     const { token } = req.query;
     try {
+        // Capturar la orden de PayPal
         const response = await axios.post(`${PAYPAL_API}/v2/checkout/orders/${token}/capture`, {}, {
             auth: {
                 username: PAYPAL_API_CLIENT,
@@ -80,7 +82,25 @@ const captureOrder = async (req, res) => {
 
         console.log('Orden capturada:', response.data);
 
-        // Redirigir al home del frontend tras capturar la orden
+        // Extraer los datos necesarios
+        const orderData = {
+            id: response.data.id,
+            status: response.data.status,
+            email_address: response.data.payer.email_address,
+            account_id: response.data.payer.payer_id,
+            account_status: response.data.payment_source.paypal.account_status,
+            name: response.data.payer.name,
+            address: response.data.payer.address,
+        };
+
+        // Guardar en la base de datos
+        const db = admin.firestore();
+        const facturaRef = db.collection('factura').doc(orderData.id);
+        await facturaRef.set(orderData);
+
+        console.log('Orden guardada en Firestore:', orderData);
+
+        // Redirigir al frontend tras capturar la orden
         return res.redirect('https://marketgog5.netlify.app/home');
     } catch (error) {
         console.error('Error al capturar la orden:', error.response?.data || error.message);
