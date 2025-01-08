@@ -21,7 +21,7 @@ const createOrder = async (req, res) => {
             brand_name: "marketgo",
             landing_page: "NO_PREFERENCE",
             user_action: "PAY_NOW",
-            return_url: `https://marketgog5.netlify.app`,
+            return_url: `https://backend-marketgo.onrender.com/capture-order`,
             cancel_url: `https://backend-marketgo.onrender.com/cancel-order`,
         }
     };
@@ -77,13 +77,15 @@ const captureOrder = async (req, res) => {
                 password: PAYPAL_API_SECRET
             }
         });
-        console.log(response.data);
-        return res.send('Pagado');
+
+        console.log('Orden capturada con éxito:', response.data);
+        return res.json({ status: 'COMPLETED', data: response.data });
     } catch (error) {
         console.error('Error al capturar la orden:', error.response?.data || error.message);
         return res.status(500).json({ error: 'Error al capturar la orden en PayPal' });
     }
 };
+
 
 const cancelPayment = (req, res) => res.send('Pago cancelado');
 
