@@ -78,25 +78,20 @@ const captureOrder = async (req, res) => {
             }
         });
 
-        console.log('Orden capturada con éxito:', response.data);
+        console.log('Orden capturada:', response.data);
 
-        // Devuelve una página que cierre la ventana emergente y notifique al frontend
-        res.send(`
-            <script>
-                window.opener.postMessage({ status: 'COMPLETED', data: ${JSON.stringify(response.data)} }, '*');
-                window.close();
-            </script>
-        `);
+        // Devolver solo el estado y los datos necesarios
+        return res.json({
+            status: response.data.status,
+            payer: response.data.payer,
+            purchase_units: response.data.purchase_units
+        });
     } catch (error) {
         console.error('Error al capturar la orden:', error.response?.data || error.message);
-        res.send(`
-            <script>
-                window.opener.postMessage({ status: 'FAILED', error: '${error.message}' }, '*');
-                window.close();
-            </script>
-        `);
+        return res.status(500).json({ error: 'Error al capturar la orden en PayPal' });
     }
 };
+
 
 
 
