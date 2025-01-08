@@ -21,7 +21,7 @@ const createOrder = async (req, res) => {
             brand_name: "marketgo",
             landing_page: "NO_PREFERENCE",
             user_action: "PAY_NOW",
-            return_url: `https://backend-marketgo.onrender.com/capture-order`,
+            return_url: `https://marketgog5.netlify.app`,
             cancel_url: `https://backend-marketgo.onrender.com/cancel-order`,
         }
     };
