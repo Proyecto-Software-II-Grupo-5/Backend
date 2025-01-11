@@ -151,9 +151,9 @@ const captureOrder = async (req, res) => {
         // Guardar en la base de datos
         const db = admin.firestore();
         const facturaRef = db.collection('factura').doc(orderData.id);
-        await facturaRef.set(orderData);
+        await facturaRef.set(facturaData);
 
-        console.log('Orden guardada en Firestore:', orderData);
+        console.log('Orden guardada en Firestore:', facturaData);
 
         // Redirigir al frontend tras capturar la orden
         return res.redirect('https://marketgog5.netlify.app/home');
