@@ -112,6 +112,10 @@ const captureOrder = async (req, res) => {
 
 
 
-const cancelPayment = (req, res) => res.send('Pago cancelado');
+const cancelPayment = (req, res) => {
+    console.log('El usuario ha cancelado el pago.'); // Registro en consola
+    // Redirigir al frontend en caso de cancelar el pago
+    return res.redirect('https://marketgog5.netlify.app/home');
+};
 
 module.exports = { createOrder, captureOrder, cancelPayment };
