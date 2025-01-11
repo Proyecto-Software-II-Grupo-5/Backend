@@ -38,8 +38,9 @@ const createOrder = async (req, res) => {
                         currency_code: "USD",
                         value: item.price.toFixed(2),
                     },
-                    quantity: item.quantity,
+                    quantity: item.quantity.toString(),
                 })),
+                
             },
         ],
         application_context: {
