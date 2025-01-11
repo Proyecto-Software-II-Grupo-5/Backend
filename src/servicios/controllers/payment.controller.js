@@ -8,23 +8,25 @@ const PAYPAL_API_SECRET = process.env.PAYPAL_API_SECRET;
 const PAYPAL_API_CLIENT = process.env.PAYPAL_API_CLIENT;
 
 const createOrder = async (req, res) => {
-    const { cartItems, total } = req.body; // Obtener los datos del frontend
+    const { cartItems, total } = req.body;
 
-    // Validar los datos recibidos
+    // Log para verificar los datos recibidos
+    console.log('Datos recibidos del frontend:', { cartItems, total });
+
     if (!cartItems || !total) {
+        console.error('Error: Datos insuficientes para crear la orden');
         return res.status(400).json({ error: 'Datos insuficientes para crear la orden' });
     }
 
-    // Construir la orden de PayPal con el total recibido
     const order = {
         intent: "CAPTURE",
         purchase_units: [
             {
                 amount: {
                     currency_code: "USD",
-                    value: total.toFixed(2), // Asegurarse de que sea un string con 2 decimales
+                    value: total.toFixed(2),
                 },
-                description: "Compra en MarketGo", // Descripción opcional
+                description: "Compra en MarketGo",
                 items: cartItems.map(item => ({
                     name: item.name,
                     unit_amount: {
@@ -39,15 +41,13 @@ const createOrder = async (req, res) => {
             brand_name: "marketgo",
             landing_page: "NO_PREFERENCE",
             user_action: "PAY_NOW",
-            return_url: `https://backend-marketgo.onrender.com/payment/capture-order`,
-            cancel_url: `https://backend-marketgo.onrender.com/payment/cancel-order`,
+            return_url: "https://backend-marketgo.onrender.com/payment/capture-order",
+            cancel_url: "https://backend-marketgo.onrender.com/payment/cancel-order",
         },
     };
 
     try {
-        console.log('Iniciando la autenticación con PayPal...');
-
-        // Obtener el token de acceso de PayPal
+        console.log('Iniciando autenticación con PayPal...');
         const params = new URLSearchParams();
         params.append('grant_type', 'client_credentials');
 
@@ -58,11 +58,9 @@ const createOrder = async (req, res) => {
             },
         });
 
-        console.log('Token obtenido con éxito:', access_token);
+        console.log('Token obtenido:', access_token);
 
         console.log('Creando la orden en PayPal...');
-
-        // Crear la orden de PayPal
         const response = await axios.post(`${PAYPAL_API}/v2/checkout/orders`, order, {
             headers: {
                 Authorization: `Bearer ${access_token}`,
@@ -70,21 +68,22 @@ const createOrder = async (req, res) => {
             },
         });
 
-        console.log('Orden creada con éxito:', response.data);
+        console.log('Orden creada:', response.data);
 
         const approveLink = response.data.links.find(link => link.rel === 'approve');
 
         if (!approveLink) {
+            console.error('Error: No se encontró la URL de aprobación de PayPal');
             return res.status(500).json({ error: 'No se encontró la URL de aprobación de PayPal' });
         }
 
-        // Devuelve la URL de aprobación
         return res.json({ approveUrl: approveLink.href });
     } catch (error) {
         console.error('Error al crear la orden:', error.response?.data || error.message);
         return res.status(500).json({ error: 'Error al crear la orden en PayPal' });
     }
 };
+
 
 
 const captureOrder = async (req, res) => {

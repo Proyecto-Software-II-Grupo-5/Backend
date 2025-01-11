@@ -25,6 +25,7 @@ app.use(cors(corsOptions));
 // Otros middlewares
 app.use(express.json());
 app.use(compression());
+app.use(express.urlencoded({ extended: true })); // Para datos codificados en URL
 
 // Importa los servicios
 const registerUser = require('./servicios/registrarusuario');
