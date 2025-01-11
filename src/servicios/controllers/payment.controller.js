@@ -8,7 +8,7 @@ const PAYPAL_API_SECRET = process.env.PAYPAL_API_SECRET;
 const PAYPAL_API_CLIENT = process.env.PAYPAL_API_CLIENT;
 
 const createOrder = async (req, res) => {
-    const { cartItems, total, subtotal, iva } = req.body;
+    const { cartItems, total, subtotal, iva, datosCliente, cartSummary } = req.body;
 
     // Validar datos del frontend
     if (!Array.isArray(cartItems) || cartItems.length === 0) {
@@ -103,16 +103,17 @@ const createOrder = async (req, res) => {
             return res.status(500).json({ error: 'No se encontró la URL de aprobación de PayPal' });
         }
 
+        // Agregar los datos adicionales al payload para `captureOrder` 
+        req.body.datosCliente = datosCliente; 
+        req.body.cartSummary = cartSummary;
+
+
         return res.json({ approveUrl: approveLink.href });
     } catch (error) {
         console.error('Error al crear la orden:', error.response?.data || error.message);
         return res.status(500).json({ error: 'Error al crear la orden en PayPal' });
     }
 };
-
-
-
-
 
 const captureOrder = async (req, res) => {
     const { token } = req.query;
@@ -137,6 +138,15 @@ const captureOrder = async (req, res) => {
             name: response.data.payer.name,
             address: response.data.payer.address,
         };
+        // Datos adicionales del pedido 
+        const datosPedido = req.body.datosCliente; // Añadir datos del cliente desde el body de la solicitud 
+        const cartItems = req.body.cartItems; // Añadir items del carrito desde el body de la solicitud 
+        const cartSummary = req.body.cartSummary;
+    
+        // Datos para guardar en Firestore
+        const facturaData = { ...orderData, ...datosPedido, cartItems, cartSummary, metodoPago: 'PayPal' };
+
+
 
         // Guardar en la base de datos
         const db = admin.firestore();
@@ -152,10 +162,6 @@ const captureOrder = async (req, res) => {
         return res.status(500).json({ error: 'Error al capturar la orden en PayPal' });
     }
 };
-
-
-
-
 
 const cancelPayment = (req, res) => {
     console.log('El usuario ha cancelado el pago.'); // Registro en consola
