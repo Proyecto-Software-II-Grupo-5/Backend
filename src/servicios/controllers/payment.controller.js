@@ -10,13 +10,18 @@ const PAYPAL_API_CLIENT = process.env.PAYPAL_API_CLIENT;
 const createOrder = async (req, res) => {
     const { cartItems, total } = req.body;
 
-    // Log para verificar los datos recibidos
-    console.log('Datos recibidos del frontend:', { cartItems, total });
-
-    if (!cartItems || !total) {
-        console.error('Error: Datos insuficientes para crear la orden');
-        return res.status(400).json({ error: 'Datos insuficientes para crear la orden' });
+    // Validar datos del frontend
+    if (!Array.isArray(cartItems) || cartItems.length === 0) {
+        console.error('Error: El carrito está vacío o no es un array válido.');
+        return res.status(400).json({ error: 'El carrito está vacío o no es un array válido.' });
     }
+
+    if (!total || isNaN(total)) {
+        console.error('Error: El total es inválido o no fue proporcionado.');
+        return res.status(400).json({ error: 'El total es inválido o no fue proporcionado.' });
+    }
+
+    console.log('Datos recibidos del frontend:', { cartItems, total });
 
     const order = {
         intent: "CAPTURE",
