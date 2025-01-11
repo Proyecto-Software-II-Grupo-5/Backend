@@ -23,6 +23,8 @@ const createOrder = async (req, res) => {
 
     console.log('Datos recibidos del frontend:', { cartItems, total });
 
+    const itemTotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2);
+
     const order = {
         intent: "CAPTURE",
         purchase_units: [
@@ -30,6 +32,12 @@ const createOrder = async (req, res) => {
                 amount: {
                     currency_code: "USD",
                     value: total.toFixed(2),
+                    breakdown: {
+                        item_total: {
+                            currency_code: "USD",
+                            value: itemTotal,
+                        }
+                    }
                 },
                 description: "Compra en MarketGo",
                 items: cartItems.map(item => ({
@@ -40,7 +48,6 @@ const createOrder = async (req, res) => {
                     },
                     quantity: item.quantity.toString(),
                 })),
-                
             },
         ],
         application_context: {
@@ -89,6 +96,7 @@ const createOrder = async (req, res) => {
         return res.status(500).json({ error: 'Error al crear la orden en PayPal' });
     }
 };
+
 
 
 
