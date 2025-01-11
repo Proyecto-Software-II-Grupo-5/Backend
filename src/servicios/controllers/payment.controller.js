@@ -8,14 +8,31 @@ const PAYPAL_API_SECRET = process.env.PAYPAL_API_SECRET;
 const PAYPAL_API_CLIENT = process.env.PAYPAL_API_CLIENT;
 
 const createOrder = async (req, res) => {
+    const { cartItems, total } = req.body; // Obtener los datos del frontend
+
+    // Validar los datos recibidos
+    if (!cartItems || !total) {
+        return res.status(400).json({ error: 'Datos insuficientes para crear la orden' });
+    }
+
+    // Construir la orden de PayPal con el total recibido
     const order = {
         intent: "CAPTURE",
         purchase_units: [
             {
                 amount: {
                     currency_code: "USD",
-                    value: "100.00"
-                }
+                    value: total.toFixed(2), // Asegurarse de que sea un string con 2 decimales
+                },
+                description: "Compra en MarketGo", // Descripción opcional
+                items: cartItems.map(item => ({
+                    name: item.name,
+                    unit_amount: {
+                        currency_code: "USD",
+                        value: item.price.toFixed(2),
+                    },
+                    quantity: item.quantity,
+                })),
             },
         ],
         application_context: {
@@ -24,7 +41,7 @@ const createOrder = async (req, res) => {
             user_action: "PAY_NOW",
             return_url: `https://backend-marketgo.onrender.com/payment/capture-order`,
             cancel_url: `https://backend-marketgo.onrender.com/payment/cancel-order`,
-        }
+        },
     };
 
     try {
@@ -37,8 +54,8 @@ const createOrder = async (req, res) => {
         const { data: { access_token } } = await axios.post(`${PAYPAL_API}/v1/oauth2/token`, params, {
             auth: {
                 username: PAYPAL_API_CLIENT,
-                password: PAYPAL_API_SECRET
-            }
+                password: PAYPAL_API_SECRET,
+            },
         });
 
         console.log('Token obtenido con éxito:', access_token);
@@ -49,8 +66,8 @@ const createOrder = async (req, res) => {
         const response = await axios.post(`${PAYPAL_API}/v2/checkout/orders`, order, {
             headers: {
                 Authorization: `Bearer ${access_token}`,
-                'Content-Type': 'application/json'
-            }
+                'Content-Type': 'application/json',
+            },
         });
 
         console.log('Orden creada con éxito:', response.data);
@@ -61,13 +78,14 @@ const createOrder = async (req, res) => {
             return res.status(500).json({ error: 'No se encontró la URL de aprobación de PayPal' });
         }
 
-        // Devuelve la respuesta completa para verificarla
+        // Devuelve la URL de aprobación
         return res.json({ approveUrl: approveLink.href });
     } catch (error) {
         console.error('Error al crear la orden:', error.response?.data || error.message);
         return res.status(500).json({ error: 'Error al crear la orden en PayPal' });
     }
 };
+
 
 const captureOrder = async (req, res) => {
     const { token } = req.query;
