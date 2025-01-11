@@ -117,6 +117,7 @@ const createOrder = async (req, res) => {
 
 const captureOrder = async (req, res) => {
     const { token } = req.query;
+
     try {
         // Capturar la orden de PayPal
         const response = await axios.post(`${PAYPAL_API}/v2/checkout/orders/${token}/capture`, {}, {
@@ -128,8 +129,14 @@ const captureOrder = async (req, res) => {
 
         console.log('Orden capturada:', response.data);
 
-        // Extraer los datos necesarios
-        const orderData = {
+        // Datos del cliente y del carrito
+        const datosCliente = req.body.datosCliente || {};
+        const cartItems = req.body.cartItems || [];
+        const cartSummary = req.body.cartSummary || {};
+        const metodoPago = 'PayPal'; // Método de pago seleccionado
+
+        // Validar y formatear datos
+        const facturaData = {
             id: response.data.id,
             status: response.data.status,
             email_address: response.data.payer.email_address,
@@ -137,20 +144,26 @@ const captureOrder = async (req, res) => {
             account_status: response.data.payment_source.paypal.account_status,
             name: response.data.payer.name,
             address: response.data.payer.address,
+            datosCliente,
+            cartItems: cartItems.map(item => ({
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                total: item.total,
+                subtotal: item.subtotal,
+                iva: item.iva
+            })),
+            cartSummary: {
+                subtotal: cartSummary.subtotal || 0,
+                iva: cartSummary.iva || 0,
+                total: cartSummary.total || 0
+            },
+            metodoPago
         };
-        // Datos adicionales del pedido 
-        const datosPedido = req.body.datosCliente; // Añadir datos del cliente desde el body de la solicitud 
-        const cartItems = req.body.cartItems; // Añadir items del carrito desde el body de la solicitud 
-        const cartSummary = req.body.cartSummary;
-    
-        // Datos para guardar en Firestore
-        const facturaData = { ...orderData, ...datosPedido, cartItems, cartSummary, metodoPago: 'PayPal' };
 
-
-
-        // Guardar en la base de datos
+        // Guardar en Firestore
         const db = admin.firestore();
-        const facturaRef = db.collection('factura').doc(orderData.id);
+        const facturaRef = db.collection('factura').doc(facturaData.id);
         await facturaRef.set(facturaData);
 
         console.log('Orden guardada en Firestore:', facturaData);
@@ -162,6 +175,7 @@ const captureOrder = async (req, res) => {
         return res.status(500).json({ error: 'Error al capturar la orden en PayPal' });
     }
 };
+
 
 const cancelPayment = (req, res) => {
     console.log('El usuario ha cancelado el pago.'); // Registro en consola
