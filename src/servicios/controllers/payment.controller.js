@@ -7,8 +7,18 @@ const PAYPAL_API = process.env.PAYPAL_API;
 const PAYPAL_API_SECRET = process.env.PAYPAL_API_SECRET;
 const PAYPAL_API_CLIENT = process.env.PAYPAL_API_CLIENT;
 
+let tempClientData = {};
+let tempCartData = {}; 
+let tempCartSummary = {};
+
+
 const createOrder = async (req, res) => {
     const { cartItems, total, subtotal, iva, datosCliente, cartSummary } = req.body;
+
+    tempClientData = datosCliente; 
+    tempCartData = cartItems; 
+    tempCartSummary = cartSummary;
+
 
     // Validar datos del frontend
     if (!Array.isArray(cartItems) || cartItems.length === 0) {
@@ -113,6 +123,7 @@ const createOrder = async (req, res) => {
         console.error('Error al crear la orden:', error.response?.data || error.message);
         return res.status(500).json({ error: 'Error al crear la orden en PayPal' });
     }
+    return res.json({ approveUrl: approveLink.href });
 };
 
 const captureOrder = async (req, res) => {
@@ -130,9 +141,9 @@ const captureOrder = async (req, res) => {
         console.log('Orden capturada:', response.data);
 
         // Datos del cliente y del carrito
-        const datosCliente = req.body.datosCliente || {};
-        const cartItems = req.body.cartItems || [];
-        const cartSummary = req.body.cartSummary || {};
+        const datosCliente = tempClientData;
+        const cartItems = tempCartData;
+        const cartSummary = tempCartSummary;
         const metodoPago = 'PayPal'; // Método de pago seleccionado
 
         // Validar y formatear datos
