@@ -8,7 +8,7 @@ const PAYPAL_API_SECRET = process.env.PAYPAL_API_SECRET;
 const PAYPAL_API_CLIENT = process.env.PAYPAL_API_CLIENT;
 
 const createOrder = async (req, res) => {
-    const { cartItems, total } = req.body;
+    const { cartItems, total, subtotal, iva } = req.body;
 
     // Validar datos del frontend
     if (!Array.isArray(cartItems) || cartItems.length === 0) {
@@ -21,7 +21,7 @@ const createOrder = async (req, res) => {
         return res.status(400).json({ error: 'El total es inválido o no fue proporcionado.' });
     }
 
-    console.log('Datos recibidos del frontend:', { cartItems, total });
+    console.log('Datos recibidos del frontend:', { cartItems, total, subtotal, iva });
 
     const itemTotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2);
 
@@ -35,7 +35,11 @@ const createOrder = async (req, res) => {
                     breakdown: {
                         item_total: {
                             currency_code: "USD",
-                            value: itemTotal,
+                            value: subtotal.toFixed(2),
+                        },
+                        tax_total: {
+                            currency_code: "USD",
+                            value: iva.toFixed(2),
                         }
                     }
                 },
