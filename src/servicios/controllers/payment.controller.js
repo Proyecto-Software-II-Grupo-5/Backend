@@ -25,6 +25,15 @@ const createOrder = async (req, res) => {
 
     const itemTotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2);
 
+    // Asegurarse de que el total sea la suma exacta del subtotal y el IVA
+    const calculatedTotal = (parseFloat(subtotal) + parseFloat(iva)).toFixed(2);
+
+    // Comparar el total calculado con el total proporcionado
+    if (parseFloat(total) !== parseFloat(calculatedTotal)) {
+        console.error('Error: El total no coincide con la suma del subtotal y el IVA.');
+        return res.status(400).json({ error: 'El total no coincide con la suma del subtotal y el IVA.' });
+    }
+
     const order = {
         intent: "CAPTURE",
         purchase_units: [
@@ -100,6 +109,7 @@ const createOrder = async (req, res) => {
         return res.status(500).json({ error: 'Error al crear la orden en PayPal' });
     }
 };
+
 
 
 
