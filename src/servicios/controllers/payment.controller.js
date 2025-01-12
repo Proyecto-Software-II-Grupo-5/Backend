@@ -158,22 +158,20 @@ const captureOrder = async (req, res) => {
             name: response.data.payer.name,
             address: response.data.payer.address,
             datosCliente,
-                cartItems: cartItems.map(item => ({
-                    name: item.name,
-                    price: item.price,
-                    quantity: item.quantity,
-                    total: (item.price * item.quantity).toFixed(2), // Asegurar un valor definido
-                    subtotal: subtotal || 0, // Usa valores predeterminados si son undefined
-                    iva: iva || 0 // Usa valores predeterminados si son undefined
-                })),
-
+            cartItems: cartItems.map(item => ({
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                total: (item.price * item.quantity).toFixed(2),
+            })),
             cartSummary: {
-                subtotal: cartSummary.subtotal || 0,
+                subtotal: cartSummary.subtotal || 0, // Usa valores predeterminados si están indefinidos
                 iva: cartSummary.iva || 0,
-                total: cartSummary.total || 0
+                total: cartSummary.total || 0,
             },
-            metodoPago
+            metodoPago,
         };
+        
 
         // Guardar en Firestore
         const db = admin.firestore();
