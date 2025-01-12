@@ -175,7 +175,6 @@ const captureOrder = async (req, res) => {
 
         // Guardar en Firestore
         const db = admin.firestore();
-        db.settings({ ignoreUndefinedProperties: true });
         const facturaRef = db.collection('factura').doc(facturaData.id);
         await facturaRef.set(facturaData);
 
