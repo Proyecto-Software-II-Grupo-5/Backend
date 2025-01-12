@@ -124,15 +124,42 @@ const captureOrder = async (req, res) => {
         };
 
         const db = admin.firestore();
+
+        // Guardar factura en Firebase
         const facturaRef = db.collection('factura').doc(facturaData.id);
         await facturaRef.set(facturaData);
 
+        // Actualizar las unidades de cada producto en Firebase
+        for (const item of cartItems) {
+            const productoRef = db.collection('producto').doc(item.id); // Asegúrate de que el carrito incluya el ID del producto
+            const productoSnapshot = await productoRef.get();
+
+            if (!productoSnapshot.exists) {
+                console.warn(`Producto con ID ${item.id} no encontrado en la base de datos.`);
+                continue;
+            }
+
+            const productoData = productoSnapshot.data();
+            const unidadesActuales = productoData.unidades || 0;
+
+            if (unidadesActuales < item.quantity) {
+                console.error(`Stock insuficiente para el producto ${item.name}.`);
+                return res.status(400).json({ error: `Stock insuficiente para el producto ${item.name}.` });
+            }
+
+            await productoRef.update({
+                unidades: unidadesActuales - item.quantity,
+            });
+        }
+
+        // Redirigir al frontend después de capturar el pago y actualizar los datos
         return res.redirect('https://marketgog5.netlify.app/home');
     } catch (error) {
         console.error('Error al capturar la orden:', error.response?.data || error.message);
         return res.status(500).json({ error: 'Error al capturar la orden en PayPal' });
     }
 };
+
 
 const cancelPayment = (req, res) => {
     console.log('El usuario ha cancelado el pago.'); // Registro en consola
