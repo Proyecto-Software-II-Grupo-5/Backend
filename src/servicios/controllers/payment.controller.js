@@ -137,7 +137,7 @@ const captureOrder = async (req, res) => {
             
             
 
-            if (!productoSnapshot.exists) {
+            if (productoQuerySnapshot.empty) {
                 console.warn(`Producto con nombre ${item.name} no encontrado en la base de datos`);
                 continue;
             }
