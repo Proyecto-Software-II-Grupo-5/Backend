@@ -131,15 +131,19 @@ const captureOrder = async (req, res) => {
 
         // Actualizar las unidades de cada producto en Firebase
         for (const item of cartItems) {
-            const productoRef = db.collection('producto').doc(item.id); // Asegúrate de que el carrito incluya el ID del producto
-            const productoSnapshot = await productoRef.get();
+            const productoQuerySnapshot = await db.collection('producto') // Asegúrate de que el carrito incluya el ID del producto
+            .where('nombre', '==', item.name)
+            .get();
+            
+            
 
             if (!productoSnapshot.exists) {
-                console.warn(`Producto con ID ${item.id} no encontrado en la base de datos.`);
+                console.warn(`Producto con nombre ${item.name} no encontrado en la base de datos`);
                 continue;
             }
 
-            const productoData = productoSnapshot.data();
+            const productoDoc = productoQuerySnapshot.docs[0];
+            const productoData = productoDoc.data();
             const unidadesActuales = productoData.unidades || 0;
 
             if (unidadesActuales < item.quantity) {
