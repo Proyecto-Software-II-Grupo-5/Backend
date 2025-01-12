@@ -15,32 +15,21 @@ let tempCartSummary = {};
 const createOrder = async (req, res) => {
     const { cartItems, total, subtotal, iva, datosCliente, cartSummary } = req.body;
 
-    tempClientData = datosCliente; 
-    tempCartData = cartItems; 
+    tempClientData = datosCliente;
+    tempCartData = cartItems;
     tempCartSummary = cartSummary;
 
-
-    // Validar datos del frontend
+    // Validaciones básicas
     if (!Array.isArray(cartItems) || cartItems.length === 0) {
-        console.error('Error: El carrito está vacío o no es un array válido.');
         return res.status(400).json({ error: 'El carrito está vacío o no es un array válido.' });
     }
 
     if (!total || isNaN(total)) {
-        console.error('Error: El total es inválido o no fue proporcionado.');
         return res.status(400).json({ error: 'El total es inválido o no fue proporcionado.' });
     }
 
-    console.log('Datos recibidos del frontend:', { cartItems, total, subtotal, iva });
-
-    const itemTotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2);
-
-    // Asegurarse de que el total sea la suma exacta del subtotal y el IVA
     const calculatedTotal = (parseFloat(subtotal) + parseFloat(iva)).toFixed(2);
-
-    // Comparar el total calculado con el total proporcionado
     if (parseFloat(total) !== parseFloat(calculatedTotal)) {
-        console.error('Error: El total no coincide con la suma del subtotal y el IVA.');
         return res.status(400).json({ error: 'El total no coincide con la suma del subtotal y el IVA.' });
     }
 
@@ -52,23 +41,14 @@ const createOrder = async (req, res) => {
                     currency_code: "USD",
                     value: total.toFixed(2),
                     breakdown: {
-                        item_total: {
-                            currency_code: "USD",
-                            value: subtotal.toFixed(2),
-                        },
-                        tax_total: {
-                            currency_code: "USD",
-                            value: iva.toFixed(2),
-                        }
-                    }
+                        item_total: { currency_code: "USD", value: subtotal.toFixed(2) },
+                        tax_total: { currency_code: "USD", value: iva.toFixed(2) },
+                    },
                 },
                 description: "Compra en MarketGo",
                 items: cartItems.map(item => ({
                     name: item.name,
-                    unit_amount: {
-                        currency_code: "USD",
-                        value: item.price.toFixed(2),
-                    },
+                    unit_amount: { currency_code: "USD", value: item.price.toFixed(2) },
                     quantity: item.quantity.toString(),
                 })),
             },
@@ -83,20 +63,7 @@ const createOrder = async (req, res) => {
     };
 
     try {
-        console.log('Iniciando autenticación con PayPal...');
-        const params = new URLSearchParams();
-        params.append('grant_type', 'client_credentials');
-
-        const { data: { access_token } } = await axios.post(`${PAYPAL_API}/v1/oauth2/token`, params, {
-            auth: {
-                username: PAYPAL_API_CLIENT,
-                password: PAYPAL_API_SECRET,
-            },
-        });
-
-        console.log('Token obtenido:', access_token);
-
-        console.log('Creando la orden en PayPal...');
+        const access_token = await getPayPalToken();
         const response = await axios.post(`${PAYPAL_API}/v2/checkout/orders`, order, {
             headers: {
                 Authorization: `Bearer ${access_token}`,
@@ -104,51 +71,35 @@ const createOrder = async (req, res) => {
             },
         });
 
-        console.log('Orden creada:', response.data);
-
         const approveLink = response.data.links.find(link => link.rel === 'approve');
-
         if (!approveLink) {
-            console.error('Error: No se encontró la URL de aprobación de PayPal');
             return res.status(500).json({ error: 'No se encontró la URL de aprobación de PayPal' });
         }
-
-        // Agregar los datos adicionales al payload para `captureOrder` 
-        req.body.datosCliente = datosCliente; 
-        req.body.cartSummary = cartSummary;
-
 
         return res.json({ approveUrl: approveLink.href });
     } catch (error) {
         console.error('Error al crear la orden:', error.response?.data || error.message);
         return res.status(500).json({ error: 'Error al crear la orden en PayPal' });
     }
-    return res.json({ approveUrl: approveLink.href });
 };
 
 const captureOrder = async (req, res) => {
     const { token } = req.query;
 
     try {
-        // Capturar la orden de PayPal
+        const access_token = await getPayPalToken();
         const response = await axios.post(`${PAYPAL_API}/v2/checkout/orders/${token}/capture`, {}, {
-            auth: {
-                username: PAYPAL_API_CLIENT,
-                password: PAYPAL_API_SECRET
-            }
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+                'Content-Type': 'application/json',
+            },
         });
 
-        console.log('Orden capturada:', response.data);
-
-        // Datos del cliente y del carrito
         const datosCliente = tempClientData;
-
         const cartItems = tempCartData;
-
         const cartSummary = tempCartSummary;
-        const metodoPago = 'PayPal'; // Método de pago seleccionado
+        const metodoPago = 'PayPal';
 
-        // Validar y formatear datos
         const facturaData = {
             id: response.data.id,
             status: response.data.status,
@@ -165,22 +116,17 @@ const captureOrder = async (req, res) => {
                 total: (item.price * item.quantity).toFixed(2),
             })),
             cartSummary: {
-                subtotal: cartSummary.subtotal || 0, // Usa valores predeterminados si están indefinidos
+                subtotal: cartSummary.subtotal || 0,
                 iva: cartSummary.iva || 0,
                 total: cartSummary.total || 0,
             },
             metodoPago,
         };
-        
 
-        // Guardar en Firestore
         const db = admin.firestore();
         const facturaRef = db.collection('factura').doc(facturaData.id);
         await facturaRef.set(facturaData);
 
-        console.log('Orden guardada en Firestore:', facturaData);
-
-        // Redirigir al frontend tras capturar la orden
         return res.redirect('https://marketgog5.netlify.app/home');
     } catch (error) {
         console.error('Error al capturar la orden:', error.response?.data || error.message);
@@ -188,11 +134,39 @@ const captureOrder = async (req, res) => {
     }
 };
 
-
 const cancelPayment = (req, res) => {
     console.log('El usuario ha cancelado el pago.'); // Registro en consola
     // Redirigir al frontend en caso de cancelar el pago
     return res.redirect('https://marketgog5.netlify.app/home');
 };
+
+let paypalToken = null;
+let tokenExpirationTime = null;
+
+const getPayPalToken = async () => {
+    if (paypalToken && tokenExpirationTime > Date.now()) {
+        // El token actual sigue siendo válido
+        return paypalToken;
+    }
+
+    console.log('Obteniendo un nuevo token de PayPal...');
+    const params = new URLSearchParams();
+    params.append('grant_type', 'client_credentials');
+
+    const { data } = await axios.post(`${PAYPAL_API}/v1/oauth2/token`, params, {
+        auth: {
+            username: PAYPAL_API_CLIENT,
+            password: PAYPAL_API_SECRET,
+        },
+    });
+
+    // Guarda el nuevo token y su tiempo de expiración
+    paypalToken = data.access_token;
+    tokenExpirationTime = Date.now() + data.expires_in * 1000; // Tiempo de expiración en milisegundos
+
+    return paypalToken;
+};
+
+
 
 module.exports = { createOrder, captureOrder, cancelPayment };
