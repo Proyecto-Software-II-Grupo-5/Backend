@@ -151,7 +151,7 @@ const captureOrder = async (req, res) => {
                 return res.status(400).json({ error: `Stock insuficiente para el producto ${item.name}.` });
             }
 
-            await productoRef.update({
+            await productoDoc.ref.update({
                 unidades: unidadesActuales - item.quantity,
             });
         }
