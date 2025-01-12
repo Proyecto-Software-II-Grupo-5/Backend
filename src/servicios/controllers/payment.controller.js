@@ -142,7 +142,9 @@ const captureOrder = async (req, res) => {
 
         // Datos del cliente y del carrito
         const datosCliente = tempClientData;
+
         const cartItems = tempCartData;
+
         const cartSummary = tempCartSummary;
         const metodoPago = 'PayPal'; // Método de pago seleccionado
 
@@ -156,14 +158,15 @@ const captureOrder = async (req, res) => {
             name: response.data.payer.name,
             address: response.data.payer.address,
             datosCliente,
-            cartItems: cartItems.map(item => ({
-                name: item.name,
-                price: item.price,
-                quantity: item.quantity,
-                total: item.total,
-                subtotal: item.subtotal,
-                iva: item.iva
-            })),
+                cartItems: cartItems.map(item => ({
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity,
+                    total: (item.price * item.quantity).toFixed(2), // Asegurar un valor definido
+                    subtotal: subtotal || 0, // Usa valores predeterminados si son undefined
+                    iva: iva || 0 // Usa valores predeterminados si son undefined
+                })),
+
             cartSummary: {
                 subtotal: cartSummary.subtotal || 0,
                 iva: cartSummary.iva || 0,
@@ -174,6 +177,7 @@ const captureOrder = async (req, res) => {
 
         // Guardar en Firestore
         const db = admin.firestore();
+        db.settings({ ignoreUndefinedProperties: true });
         const facturaRef = db.collection('factura').doc(facturaData.id);
         await facturaRef.set(facturaData);
 
