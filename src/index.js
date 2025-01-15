@@ -1,3 +1,4 @@
+//index.js
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -7,11 +8,14 @@ const port = 3000;
  
 
 // Configurar encabezados de seguridad con Helmet
-app.use(
-  helmet({
-    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' }, // Permite popups sin romper la seguridad
-  })
-);
+app.use(helmet({
+  crossOriginOpenerPolicy: false // Desactiva esta política
+}));
+
+app.use((req, res, next) => {
+  console.log(`[Request] ${req.method} ${req.originalUrl}`, req.headers, req.body);
+  next();
+});
 
 // Configurar CORS
 const corsOptions = {

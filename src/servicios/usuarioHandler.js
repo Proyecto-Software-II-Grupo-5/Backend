@@ -1,3 +1,4 @@
+//usuarioHandler.js
 const admin = require('firebase-admin');
 
 const verificarYRegistrarUsuario = async (idToken, registrar = false) => {

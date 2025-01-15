@@ -1,3 +1,4 @@
+//payment.controller.js
 const { application } = require("express");
 const admin = require('../../firebase'); // Importar la configuración de Firebase
 const axios = require('axios');

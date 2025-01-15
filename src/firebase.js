@@ -1,3 +1,4 @@
+//firebase.js
 const admin = require('firebase-admin');
 const serviceAccount = require('/etc/secrets/serviceAccountKey.json');// Actualiza la ruta a tu archivo de clave del servicio
 

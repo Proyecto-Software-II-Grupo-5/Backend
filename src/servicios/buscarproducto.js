@@ -1,3 +1,4 @@
+//buscarproducto.js
 const express = require('express');
 const admin = require('../firebase'); // Importa la configuración de Firebase desde firebase.js
 
