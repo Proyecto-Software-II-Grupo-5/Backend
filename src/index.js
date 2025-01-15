@@ -19,9 +19,9 @@ app.use((req, res, next) => {
 
 // Configurar CORS
 const corsOptions = {
-  origin: ['https://marketgog5.netlify.app'], // Orígenes permitidos
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Métodos permitidos
-  allowedHeaders: ['Content-Type', 'Authorization'], // Encabezados permitidos
+  origin: ['https://marketgog5.netlify.app', 'https://frontend-5884f.firebaseapp.com'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 };
 app.use(cors(corsOptions));
