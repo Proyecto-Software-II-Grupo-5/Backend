@@ -24,7 +24,7 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 };
-app.use(cors(corsOptions));
+app.use(cors(corsOptions)); 
 
 // Otros middlewares
 app.use(express.json());
@@ -37,6 +37,8 @@ const iniciarSesion = require('./servicios/iniciarsesion');
 const buscarProductoPorNombre = require('./servicios/buscarproductonombre'); // Importa el servicio de búsqueda por nombre
 const buscarProducto = require('./servicios/buscarproducto'); // Importa el nuevo servicio de búsqueda de producto
 const paymentRoutes = require('./servicios/payment.routes');
+const buscarProductosPorCatalogo = require('./servicios/buscarproductocatalogo');
+
 // Middleware de rutas de pagos
 app.use('/payment', paymentRoutes);
 
@@ -57,6 +59,7 @@ app.use('/registerUser', registerUser);
 app.use('/signin', iniciarSesion);
 app.use('/autosuggest', buscarProductoPorNombre);
 app.use('/buscarproducto', buscarProducto); // Usa el nuevo servicio
+app.use('/buscarproductosxcatalogo', buscarProductosPorCatalogo);
 
 // Ruta básica para verificar que el servidor está corriendo
 app.get('/', (req, res) => {
