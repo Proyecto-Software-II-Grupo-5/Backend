@@ -4,7 +4,10 @@ const router = express.Router();
 
 // Configuración de transporte para nodemailer
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // Usando Gmail, puedes cambiarlo si usas otro servicio
+    host: "smtp.gmail.com",
+    port: 465,
+    service: 'gmail', // Usando Gmail, puedes cambiarlo si usas otro servicio
+    secure: true,
   auth: {
     user: process.env.EMAIL_API_GMAIL, // Correo del emisor
     pass: process.env.EMAIL_API_PASSWORD // Contraseña o clave de aplicación de Gmail
