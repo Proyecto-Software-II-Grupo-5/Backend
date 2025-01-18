@@ -1,45 +1,53 @@
 const express = require('express');
 const nodemailer = require('nodemailer');
+const PDFDocument = require('pdfkit'); // Importar PDFKit
 const router = express.Router();
+const { generarFacturaPDF } = require('./facturaPDF'); // Importar la función
 
 // Configuración de transporte para nodemailer
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 465,
-    service: 'gmail', // Usando Gmail, puedes cambiarlo si usas otro servicio
+    service: 'gmail',
     secure: true,
-  auth: {
-    user: process.env.EMAIL_API_GMAIL, // Correo del emisor
-    pass: process.env.EMAIL_API_PASSWORD // Contraseña o clave de aplicación de Gmail
-  }
+    auth: {
+        user: process.env.EMAIL_API_GMAIL,
+        pass: process.env.EMAIL_API_PASSWORD
+    }
 });
 
-// Ruta para enviar correo
+// Ruta para enviar correo con el PDF adjunto
 router.post('/', async (req, res) => {
-  const { to } = req.body; // Recibe el correo del destinatario
+    const { to } = req.body;
 
-  if (!to) {
-    return res.status(400).json({ error: 'Falta el correo del destinatario' });
-  }
+    if (!to) {
+        return res.status(400).json({ error: 'Falta el correo del destinatario' });
+    }
 
-  try {
-    const info = await transporter.sendMail({
-      from: 'marketgo@gmail.com', // Correo del emisor
-      to, // Correo del destinatario
-      subject: 'FACTURA MARKETGO', // Asunto fijo
-      html: `
-        <p>Aquí está su link:</p>
-        <a href="https://www.youtube.com/watch?v=rM4lthSYVhE&list=RDGMEMveQBJ5EaHfODz2alVFs-IQVMrM4lthSYVhE&start_radio=1">
-          Ver video
-        </a>
-      ` // Mensaje HTML con el link
-    });
+    try {
+        // Generar el PDF llamando a factura.js
+        const pdfBuffer = await generarFacturaPDF();
 
-    res.status(200).json({ message: 'Correo enviado exitosamente', info });
-  } catch (error) {
-    console.error('Error al enviar el correo:', error);
-    res.status(500).json({ error: 'Error al enviar el correo', details: error.message });
-  }
+        // Enviar el correo con el PDF adjunto
+        const info = await transporter.sendMail({
+            from: 'marketgo@gmail.com',
+            to,
+            subject: 'FACTURA MARKETGO',
+            html: `<p>Por favor, encuentre adjunta su factura.</p>`,
+            attachments: [
+                {
+                    filename: 'factura.pdf',
+                    content: pdfBuffer,
+                    contentType: 'application/pdf'
+                }
+            ]
+        });
+
+        res.status(200).json({ message: 'Correo enviado exitosamente', info });
+    } catch (error) {
+        console.error('Error al enviar el correo:', error);
+        res.status(500).json({ error: 'Error al enviar el correo', details: error.message });
+    }
 });
 
 module.exports = router;
