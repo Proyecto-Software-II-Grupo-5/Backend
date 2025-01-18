@@ -39,6 +39,7 @@ const buscarProducto = require('./servicios/buscarproducto'); // Importa el nuev
 const paymentRoutes = require('./servicios/payment.routes');
 const buscarProductosPorCatalogo = require('./servicios/buscarproductocatalogo');
 const validarDatos = require('./servicios/validarDatos');
+const sendEmail = require('./servicios/sendMail');
 
 // Middleware de rutas de pagos
 app.use('/payment', paymentRoutes);
@@ -62,6 +63,7 @@ app.use('/autosuggest', buscarProductoPorNombre);
 app.use('/buscarproducto', buscarProducto); // Usa el nuevo servicio
 app.use('/buscarproductosxcatalogo', buscarProductosPorCatalogo);
 app.use('/validacionDatos', validarDatos);
+app.use('/sendMail', sendMail);
 
 // Ruta básica para verificar que el servidor está corriendo
 app.get('/', (req, res) => {
