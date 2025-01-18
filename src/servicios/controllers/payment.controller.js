@@ -161,8 +161,19 @@ const captureOrder = async (req, res) => {
                 unidades: unidadesActuales - item.quantity,
             });
         }
-                // Enviar el correo con la factura al usuario
-                await enviarCorreoConPDF(emailUserMarketgo);
+            // Enviar el correo con la factura al usuario
+            await enviarCorreoConPDF(emailUserMarketgo, {
+                numero: facturaData.id,
+                fecha: new Date().toLocaleDateString(),
+                cliente: datosCliente.nombre || 'N/A',
+                direccion: datosCliente.direccion || 'N/A',
+                productos: facturaData.cartItems,
+                subtotal: facturaData.cartSummary.subtotal,
+                iva: facturaData.cartSummary.iva,
+                total: facturaData.cartSummary.total,
+                metodoPago: facturaData.metodoPago,
+            });
+
         // Redirigir al frontend después de capturar el pago y actualizar los datos
         return res.redirect('https://marketgog5.netlify.app/home');
     } catch (error) {
