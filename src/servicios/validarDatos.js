@@ -55,7 +55,7 @@ const validarDireccion = (direccion) => {
 };
 
 // Endpoint para validar datos
-router.post('/validar-datos', (req, res) => {
+router.post('/', (req, res) => {
   const { nombre, correo, telefono, direccion, cedula } = req.body;
 
   const errores = {
