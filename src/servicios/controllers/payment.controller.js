@@ -19,7 +19,7 @@ const createOrder = async (req, res) => {
     tempClientData = datosCliente;
     tempCartData = cartItems;
     tempCartSummary = cartSummary;
-    tempemailUserMarketgo = cartemailUserMarketgo;
+    tempemailUserMarketgo = emailUserMarketgo;
 
     // Validaciones básicas
     if (!Array.isArray(cartItems) || cartItems.length === 0) {
