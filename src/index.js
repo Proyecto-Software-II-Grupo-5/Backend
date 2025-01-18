@@ -39,7 +39,7 @@ const buscarProducto = require('./servicios/buscarproducto'); // Importa el nuev
 const paymentRoutes = require('./servicios/payment.routes');
 const buscarProductosPorCatalogo = require('./servicios/buscarproductocatalogo');
 const validarDatos = require('./servicios/validarDatos');
-const sendEmail = require('./servicios/sendMail');
+const sendMail = require('./servicios/sendMail');
 
 // Middleware de rutas de pagos
 app.use('/payment', paymentRoutes);
