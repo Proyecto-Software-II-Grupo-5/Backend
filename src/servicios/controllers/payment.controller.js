@@ -14,11 +14,12 @@ let tempCartSummary = {};
 
 
 const createOrder = async (req, res) => {
-    const { cartItems, total, subtotal, iva, datosCliente, cartSummary } = req.body;
+    const { emailUserMarketgo, cartItems, total, subtotal, iva, datosCliente, cartSummary } = req.body;
 
     tempClientData = datosCliente;
     tempCartData = cartItems;
     tempCartSummary = cartSummary;
+    tempemailUserMarketgo = cartemailUserMarketgo;
 
     // Validaciones básicas
     if (!Array.isArray(cartItems) || cartItems.length === 0) {
@@ -100,8 +101,11 @@ const captureOrder = async (req, res) => {
         const cartItems = tempCartData;
         const cartSummary = tempCartSummary;
         const metodoPago = 'PayPal';
+        const emailUserMarketgo = tempemailUserMarketgo;
+   
 
         const facturaData = {
+            emailusuariomarketgo: emailUserMarketgo,
             id: response.data.id,
             status: response.data.status,
             email_address: response.data.payer.email_address,
