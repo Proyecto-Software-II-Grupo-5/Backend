@@ -1,7 +1,4 @@
-const express = require('express');
 const nodemailer = require('nodemailer');
-const PDFDocument = require('pdfkit'); // Importar PDFKit
-const router = express.Router();
 const { generarFacturaPDF } = require('./facturaPDF'); // Importar la función
 
 // Configuración de transporte para nodemailer
@@ -16,12 +13,10 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// Ruta para enviar correo con el PDF adjunto
-router.post('/', async (req, res) => {
-    const { to } = req.body;
-
+// Función para enviar el correo con el PDF adjunto
+async function enviarCorreoConPDF(to) {
     if (!to) {
-        return res.status(400).json({ error: 'Falta el correo del destinatario' });
+        throw new Error('Falta el correo del destinatario');
     }
 
     try {
@@ -43,11 +38,11 @@ router.post('/', async (req, res) => {
             ]
         });
 
-        res.status(200).json({ message: 'Correo enviado exitosamente', info });
+        return { message: 'Correo enviado exitosamente', info };
     } catch (error) {
         console.error('Error al enviar el correo:', error);
-        res.status(500).json({ error: 'Error al enviar el correo', details: error.message });
+        throw new Error(`Error al enviar el correo: ${error.message}`);
     }
-});
+}
 
-module.exports = router;
+module.exports = { enviarCorreoConPDF };

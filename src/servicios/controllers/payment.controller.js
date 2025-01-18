@@ -2,6 +2,7 @@
 const { application } = require("express");
 const admin = require('../../firebase'); // Importar la configuración de Firebase
 const axios = require('axios');
+const { enviarCorreoConPDF } = require('../sendMail'); // Asegúrate de importar la función
 
 // Leer las variables de entorno desde process.env
 const PAYPAL_API = process.env.PAYPAL_API;
@@ -160,7 +161,8 @@ const captureOrder = async (req, res) => {
                 unidades: unidadesActuales - item.quantity,
             });
         }
-
+                // Enviar el correo con la factura al usuario
+                await enviarCorreoConPDF(emailUserMarketgo);
         // Redirigir al frontend después de capturar el pago y actualizar los datos
         return res.redirect('https://marketgog5.netlify.app/home');
     } catch (error) {
