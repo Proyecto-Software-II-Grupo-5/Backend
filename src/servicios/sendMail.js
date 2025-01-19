@@ -43,9 +43,9 @@ function generarFacturaPDF(facturaData) {
         productos.forEach((producto) => {
             doc.text(`Nombre: ${producto.name}`, { indent: 20 }); // Sangría para el nombre del producto
             doc.text(`Cantidad: ${producto.quantity}`, { indent: 40 });
-            doc.text(`Precio Unitario: $${producto.price.toFixed(2)} $${producto.ivaIndicador} `, { indent: 40 });
-            doc.text(`IVA: $${producto.iva}`, { indent: 40 });
-            doc.text(`Precio Total: $${producto.total.toFixed(2)}`, { indent: 40 });
+            doc.text(`Precio Unitario: $${producto.price.toFixed(2)}`, { indent: 40 });
+            doc.text(`IVA: $${producto.ivaProducto.toFixed(2)}  $${producto.ivaIndicador}`, { indent: 40 });
+            doc.text(`Precio Total: $${producto.totalProducto.toFixed(2)}`, { indent: 40 });
             doc.moveDown(); // Espacio entre productos
         });
         

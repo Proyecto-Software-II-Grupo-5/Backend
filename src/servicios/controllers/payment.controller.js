@@ -122,7 +122,7 @@ const captureOrder = async (req, res) => {
                 iva: item.iva,
                 subtotal: item.subtotal,
                 total: item.total,
-                ivaIndicador: item.ivaIndicador,
+                ivaIndicador: item.iva === 0 ? "Sin IVA" : "Con IVA",
 
             })),
             cartSummary: {
@@ -174,8 +174,11 @@ const captureOrder = async (req, res) => {
                 productos: facturaData.cartItems,
                 subtotal: facturaData.cartSummary.subtotal,
                 iva: facturaData.cartSummary.iva,
+                ivaProducto: facturaData.cartItems.iva,
+                totalProducto: facturaData.cartItems.total,
                 total: facturaData.cartSummary.total,
                 metodoPago: facturaData.metodoPago,
+                ivaIndicador: facturaData.cartItems.ivaIndicador,
             });
 
         // Redirigir al frontend después de capturar el pago y actualizar los datos
