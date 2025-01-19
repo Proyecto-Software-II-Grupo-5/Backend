@@ -191,7 +191,11 @@ const captureOrder = async (req, res) => {
                 numero: facturaData.id,
                 fecha: new Date().toLocaleDateString(),
                 cliente: datosCliente.nombre || 'N/A',
+                cedula: datosCliente.cedula || 'N/A',
+                telefono: datosCliente.telefono || 'N/A',
+                correo: datosCliente.correo || 'N/A',
                 direccion: datosCliente.direccion || 'N/A',
+                
                 productos: facturaData.cartItems,
                 subtotal: facturaData.cartSummary.subtotal,
                 iva: facturaData.cartSummary.iva,
