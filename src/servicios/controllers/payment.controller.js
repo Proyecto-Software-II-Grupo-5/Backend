@@ -177,11 +177,8 @@ const captureOrder = async (req, res) => {
                 productos: facturaData.cartItems,
                 subtotal: facturaData.cartSummary.subtotal,
                 iva: facturaData.cartSummary.iva,
-                ivaProducto: facturaData.cartItems.iva,
-                totalProducto: facturaData.cartItems.total,
                 total: facturaData.cartSummary.total,
                 metodoPago: facturaData.metodoPago,
-                ivaIndicador: facturaData.cartItems.ivaIndicador,
                 
             }); // LOG: Datos enviados a la función enviarCorreoConPDF
 
@@ -194,11 +191,8 @@ const captureOrder = async (req, res) => {
                 productos: facturaData.cartItems,
                 subtotal: facturaData.cartSummary.subtotal,
                 iva: facturaData.cartSummary.iva,
-                ivaProducto: facturaData.cartItems.iva,
-                totalProducto: facturaData.cartItems.total,
                 total: facturaData.cartSummary.total,
                 metodoPago: facturaData.metodoPago,
-                ivaIndicador: facturaData.cartItems.ivaIndicador,
             });
 
         // Redirigir al frontend después de capturar el pago y actualizar los datos
