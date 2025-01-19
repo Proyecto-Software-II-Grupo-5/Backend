@@ -40,7 +40,7 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   const { nombre, descripcion, cantidad, catalogo, precio, iva, unidades, imagen } = req.body;
 
-  if (!nombre || !precio || !unidades) {
+  if (!nombre || !precio || !unidades || !descripcion || !iva || !catalogo || !cantidad || !imagen) {
     return res.status(400).json({ error: 'Nombre, precio y unidades son obligatorios.' });
   }
 
