@@ -122,7 +122,7 @@ const captureOrder = async (req, res) => {
                 iva: item.iva,
                 subtotal: item.subtotal,
                 total: item.total,
-                ivaIndicador: item.iva === 0 ? "Sin IVA" : "Con IVA",
+                ivaIndicador: item.ivaIndicador,
 
             })),
             cartSummary: {
