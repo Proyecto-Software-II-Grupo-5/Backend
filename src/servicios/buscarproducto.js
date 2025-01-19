@@ -36,4 +36,34 @@ router.get('/', async (req, res) => {
   }
 });
 
+
+router.post('/', async (req, res) => {
+  const { nombre, descripcion, cantidad, catalogo, precio, iva, unidades, imagen } = req.body;
+
+  if (!nombre || !precio || !unidades) {
+    return res.status(400).json({ error: 'Nombre, precio y unidades son obligatorios.' });
+  }
+
+  try {
+    const newProduct = {
+      nombre,
+      descripcion: descripcion || '',
+      cantidad: cantidad || '',
+      catalogo: catalogo || '',
+      precio,
+      iva: iva || false,
+      unidades,
+      imagen: imagen || ''
+    };
+
+    const docRef = await db.collection('producto').add(newProduct);
+
+    res.status(201).json({ message: 'Producto creado exitosamente', id: docRef.id });
+  } catch (error) {
+    console.error('Error creando el producto:', error);
+    res.status(500).json({ error: 'Error creando el producto.' });
+  }
+});
+
+
 module.exports = router;
