@@ -24,18 +24,18 @@ function generarFacturaPDF(facturaData) {
         doc.on('error', (err) => reject(err));
 
         // Datos de la factura
-        const { numero, fecha, cliente, direccion, productos, subtotal, iva, total, metodoPago } = facturaData;
+        const { numero, fecha, cliente, telefono, correo, cedula, direccion, productos, subtotal, iva, total, metodoPago } = facturaData;
 
         // Crear contenido del PDF
         doc.fontSize(16).text('Factura de Venta - MARKETGO', { align: 'center' });
         doc.moveDown();
         doc.fontSize(12).text(`Número de Factura: ${numero}`);
         doc.text(`Fecha: ${fecha}`);
-        doc.text(`Cliente: ${datosCliente.nombre}`);
-        doc.text(`Cédula: ${datosCliente.cedula}`);
-        doc.text(`Teléfono: ${datosCliente.telefono}`);
-        doc.text(`Correo Electronico: ${datosCliente.correo}`);
-        doc.text(`Dirección: ${datosCliente.direccion}`);
+        doc.text(`Cliente: ${cliente}`);
+        doc.text(`Cédula: ${cedula}`);
+        doc.text(`Teléfono: ${telefono}`);
+        doc.text(`Correo Electronico: ${correo}`);
+        doc.text(`Dirección: ${direccion}`);
         doc.text(`Método de Pago: ${metodoPago}`);
         doc.moveDown();
 
