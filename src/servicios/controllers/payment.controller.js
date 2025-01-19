@@ -137,6 +137,8 @@ const captureOrder = async (req, res) => {
 
         // Guardar factura en Firebase
         const facturaRef = db.collection('factura').doc(facturaData.id);
+        console.log('Guardando la factura en Firebase con los datos:', facturaData); // LOG: Verificar los datos de la factura
+
         await facturaRef.set(facturaData);
 
         // Actualizar las unidades de cada producto en Firebase
@@ -165,6 +167,24 @@ const captureOrder = async (req, res) => {
                 unidades: unidadesActuales - item.quantity,
             });
         }
+
+            // Enviar el correo con la factura al usuario
+            console.log('Preparando los datos para enviar el correo:', {
+                numero: facturaData.id,
+                fecha: new Date().toLocaleDateString(),
+                cliente: datosCliente.nombre || 'N/A',
+                direccion: datosCliente.direccion || 'N/A',
+                productos: facturaData.cartItems,
+                subtotal: facturaData.cartSummary.subtotal,
+                iva: facturaData.cartSummary.iva,
+                ivaProducto: facturaData.cartItems.iva,
+                totalProducto: facturaData.cartItems.total,
+                total: facturaData.cartSummary.total,
+                metodoPago: facturaData.metodoPago,
+                ivaIndicador: facturaData.cartItems.ivaIndicador,
+                
+            }); // LOG: Datos enviados a la función enviarCorreoConPDF
+
             // Enviar el correo con la factura al usuario
             await enviarCorreoConPDF(emailUserMarketgo, {
                 numero: facturaData.id,
