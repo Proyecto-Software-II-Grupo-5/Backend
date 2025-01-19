@@ -40,6 +40,7 @@ const paymentRoutes = require('./servicios/payment.routes');
 const buscarProductosPorCatalogo = require('./servicios/buscarproductocatalogo');
 const validarDatos = require('./servicios/validarDatos');
 const createfactura = require('./servicios/factura');
+const createproduct = require('./servicios/crearproducto');
 
 // Middleware de rutas de pagos
 app.use('/payment', paymentRoutes);
@@ -64,6 +65,7 @@ app.use('/buscarproducto', buscarProducto); // Usa el nuevo servicio
 app.use('/buscarproductosxcatalogo', buscarProductosPorCatalogo);
 app.use('/validacionDatos', validarDatos);
 app.use('/createfactura', createfactura);
+app.use('/createproduct', createproduct);
 
 // Ruta básica para verificar que el servidor está corriendo
 app.get('/', (req, res) => {
