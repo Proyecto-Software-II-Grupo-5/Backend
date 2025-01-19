@@ -47,13 +47,13 @@ router.post('/', async (req, res) => {
   try {
     const newProduct = {
       nombre,
-      descripcion: descripcion || '',
-      cantidad: cantidad || '',
-      catalogo: catalogo || '',
+      descripcion,
+      cantidad,
+      catalogo,
       precio,
-      iva: iva || false,
+      iva,
       unidades,
-      imagen: imagen || ''
+      imagen
     };
 
     const docRef = await db.collection('producto').add(newProduct);
