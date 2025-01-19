@@ -119,7 +119,11 @@ const captureOrder = async (req, res) => {
                 name: item.name,
                 price: item.price,
                 quantity: item.quantity,
-                total: (item.price * item.quantity).toFixed(2),
+                iva: item.iva,
+                subtotal: item.subtotal,
+                total: item.total,
+                ivaIndicador: item.ivaIndicador,
+
             })),
             cartSummary: {
                 subtotal: cartSummary.subtotal || 0,

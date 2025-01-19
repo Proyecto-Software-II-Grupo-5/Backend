@@ -31,18 +31,24 @@ function generarFacturaPDF(facturaData) {
         doc.moveDown();
         doc.fontSize(12).text(`Número de Factura: ${numero}`);
         doc.text(`Fecha: ${fecha}`);
-        doc.text(`Cliente: ${cliente}`);
-        doc.text(`Dirección: ${direccion}`);
+        doc.text(`Cliente: ${datosCliente.nombre}`);
+        doc.text(`Cédula: ${datosCliente.cedula}`);
+        doc.text(`Teléfono: ${datosCliente.telefono}`);
+        doc.text(`Correo Electronico: ${datosCliente.correo}`);
+        doc.text(`Dirección: ${datosCliente.direccion}`);
         doc.text(`Método de Pago: ${metodoPago}`);
         doc.moveDown();
 
-        doc.text('Productos:');
-        doc.moveDown();
+        doc.text('Productos:', { underline: true }); // Encabezado con subrayado para productos
         productos.forEach((producto) => {
-            doc.text(
-                `${producto.name} - Cantidad: ${producto.quantity} - Precio Unitario: $${producto.price.toFixed(2)} - Total: $${producto.total}`
-            );
+            doc.text(`Nombre: ${producto.name}`, { indent: 20 }); // Sangría para el nombre del producto
+            doc.text(`Cantidad: ${producto.quantity}`, { indent: 40 });
+            doc.text(`Precio Unitario: $${producto.price.toFixed(2)} $${producto.ivaIndicador} `, { indent: 40 });
+            doc.text(`IVA: $${producto.iva}`, { indent: 40 });
+            doc.text(`Precio Total: $${producto.total.toFixed(2)}`, { indent: 40 });
+            doc.moveDown(); // Espacio entre productos
         });
+        
         doc.moveDown();
         doc.text(`Subtotal: $${subtotal.toFixed(2)}`);
         doc.text(`IVA: $${iva.toFixed(2)}`);
