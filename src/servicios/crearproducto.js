@@ -8,7 +8,17 @@
   router.post('/', async (req, res) => {
     const { nombre, descripcion, cantidad, catalogo, precio, iva, unidades, imagen } = req.body;
   
-    if (!nombre || !precio || !unidades || !descripcion || !iva || !catalogo || !cantidad || !imagen) {
+    // Verificar campos individualmente
+    if (
+      nombre === undefined || 
+      descripcion === undefined || 
+      cantidad === undefined || 
+      catalogo === undefined || 
+      precio === undefined || 
+      iva === undefined || 
+      unidades === undefined || 
+      imagen === undefined
+    ) {
       return res.status(400).json({ error: 'Todos los campos no han sido añadidos' });
     }
   
@@ -21,7 +31,7 @@
         precio,
         iva,
         unidades,
-        imagen
+        imagen,
       };
   
       const docRef = await db.collection('producto').add(newProduct);
@@ -32,6 +42,7 @@
       res.status(500).json({ error: 'Error creando el producto.' });
     }
   });
+  
 
 
   
