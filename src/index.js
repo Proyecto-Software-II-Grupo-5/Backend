@@ -39,7 +39,6 @@ const buscarProducto = require('./servicios/buscarproducto'); // Importa el nuev
 const paymentRoutes = require('./servicios/payment.routes');
 const buscarProductosPorCatalogo = require('./servicios/buscarproductocatalogo');
 const validarDatos = require('./servicios/validarDatos');
-const createfactura = require('./servicios/factura');
 const createproduct = require('./servicios/crearproducto');
 const modifyproduct = require('./servicios/modificarproducto');
 const deleteproduct = require('./servicios/eliminarproducto');
@@ -66,7 +65,6 @@ app.use('/autosuggest', buscarProductoPorNombre);
 app.use('/buscarproducto', buscarProducto); // Usa el nuevo servicio
 app.use('/buscarproductosxcatalogo', buscarProductosPorCatalogo);
 app.use('/validacionDatos', validarDatos);
-app.use('/createfactura', createfactura);
 app.use('/createproduct', createproduct);
 app.use('/modifyproduct', modifyproduct);
 app.use('/deleteproduct', deleteproduct);

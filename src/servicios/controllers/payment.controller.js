@@ -103,8 +103,41 @@ const captureOrder = async (req, res) => {
         const cartSummary = tempCartSummary;
         const metodoPago = 'PayPal';
         const emailUserMarketgo = tempemailUserMarketgo;
-   
 
+        // Verificar stock y reducirlo dentro de una transacción en Firestore
+        const db = admin.firestore();
+
+        try {
+            await db.runTransaction(async (transaction) => {
+                for (const item of cartItems) {
+                    const productoQuerySnapshot = await transaction.get(
+                        db.collection('producto').where('nombre', '==', item.name)
+                    );
+
+                    if (productoQuerySnapshot.empty) {
+                        throw new Error(`Producto con nombre ${item.name} no encontrado en la base de datos`);
+                    }
+
+                    const productoDoc = productoQuerySnapshot.docs[0];
+                    const productoData = productoDoc.data();
+                    const unidadesActuales = productoData.unidades || 0;
+
+                    if (unidadesActuales < item.quantity) {
+                        throw new Error(`Stock insuficiente para el producto ${item.name}`);
+                    }
+
+                    // Reducir las unidades del producto en la base de datos de manera atómica
+                    transaction.update(productoDoc.ref, {
+                        unidades: unidadesActuales - item.quantity,
+                    });
+                }
+            });
+        } catch (error) {
+            console.error('Error al reducir el stock:', error.message);
+            return res.status(400).json({ error: error.message });
+        }
+
+        // Datos de la factura
         const facturaData = {
             emailusuariomarketgo: emailUserMarketgo,
             id: response.data.id,
@@ -123,7 +156,6 @@ const captureOrder = async (req, res) => {
                 subtotal: item.subtotal,
                 total: item.total,
                 ivaIndicador: item.ivaIndicador,
-
             })),
             cartSummary: {
                 subtotal: cartSummary.subtotal || 0,
@@ -133,75 +165,41 @@ const captureOrder = async (req, res) => {
             metodoPago,
         };
 
-        const db = admin.firestore();
-
         // Guardar factura en Firebase
         const facturaRef = db.collection('factura').doc(facturaData.id);
-        console.log('Guardando la factura en Firebase con los datos:', facturaData); // LOG: Verificar los datos de la factura
-
+        console.log('Guardando la factura en Firebase con los datos:', facturaData);
         await facturaRef.set(facturaData);
 
-        // Actualizar las unidades de cada producto en Firebase
-        for (const item of cartItems) {
-            const productoQuerySnapshot = await db.collection('producto') // Asegúrate de que el carrito incluya el ID del producto
-            .where('nombre', '==', item.name)
-            .get();
-            
-            
+        // Enviar el correo con la factura al usuario
+        console.log('Preparando los datos para enviar el correo:', {
+            numero: facturaData.id,
+            fecha: new Date().toLocaleDateString(),
+            cliente: datosCliente.nombre || 'N/A',
+            cedula: datosCliente.cedula || 'N/A',
+            telefono: datosCliente.telefono || 'N/A',
+            correo: datosCliente.correo || 'N/A',
+            direccion: datosCliente.direccion || 'N/A',
+            productos: facturaData.cartItems,
+            subtotal: facturaData.cartSummary.subtotal,
+            iva: facturaData.cartSummary.iva,
+            total: facturaData.cartSummary.total,
+            metodoPago: facturaData.metodoPago,
+        });
 
-            if (productoQuerySnapshot.empty) {
-                console.warn(`Producto con nombre ${item.name} no encontrado en la base de datos`);
-                continue;
-            }
-
-            const productoDoc = productoQuerySnapshot.docs[0];
-            const productoData = productoDoc.data();
-            const unidadesActuales = productoData.unidades || 0;
-
-            if (unidadesActuales < item.quantity) {
-                console.error(`Stock insuficiente para el producto ${item.name}.`);
-                return res.status(400).json({ error: `Stock insuficiente para el producto ${item.name}.` });
-            }
-
-            await productoDoc.ref.update({
-                unidades: unidadesActuales - item.quantity,
-            });
-        }
-
-            // Enviar el correo con la factura al usuario
-            console.log('Preparando los datos para enviar el correo:', {
-                numero: facturaData.id,
-                fecha: new Date().toLocaleDateString(),
-                cliente: datosCliente.nombre || 'N/A',
-                cedula: datosCliente.cedula || 'N/A',
-                telefono: datosCliente.telefono || 'N/A',
-                correo: datosCliente.correo || 'N/A',
-                direccion: datosCliente.direccion || 'N/A',
-
-                productos: facturaData.cartItems,
-                subtotal: facturaData.cartSummary.subtotal,
-                iva: facturaData.cartSummary.iva,
-                total: facturaData.cartSummary.total,
-                metodoPago: facturaData.metodoPago,
-                
-            }); // LOG: Datos enviados a la función enviarCorreoConPDF
-
-            // Enviar el correo con la factura al usuario
-            await enviarCorreoConPDF(emailUserMarketgo, {
-                numero: facturaData.id,
-                fecha: new Date().toLocaleDateString(),
-                cliente: datosCliente.nombre || 'N/A',
-                cedula: datosCliente.cedula || 'N/A',
-                telefono: datosCliente.telefono || 'N/A',
-                correo: datosCliente.correo || 'N/A',
-                direccion: datosCliente.direccion || 'N/A',
-                
-                productos: facturaData.cartItems,
-                subtotal: facturaData.cartSummary.subtotal,
-                iva: facturaData.cartSummary.iva,
-                total: facturaData.cartSummary.total,
-                metodoPago: facturaData.metodoPago,
-            });
+        await enviarCorreoConPDF(emailUserMarketgo, {
+            numero: facturaData.id,
+            fecha: new Date().toLocaleDateString(),
+            cliente: datosCliente.nombre || 'N/A',
+            cedula: datosCliente.cedula || 'N/A',
+            telefono: datosCliente.telefono || 'N/A',
+            correo: datosCliente.correo || 'N/A',
+            direccion: datosCliente.direccion || 'N/A',
+            productos: facturaData.cartItems,
+            subtotal: facturaData.cartSummary.subtotal,
+            iva: facturaData.cartSummary.iva,
+            total: facturaData.cartSummary.total,
+            metodoPago: facturaData.metodoPago,
+        });
 
         // Redirigir al frontend después de capturar el pago y actualizar los datos
         return res.redirect('https://marketgog5.netlify.app/home');
@@ -210,6 +208,7 @@ const captureOrder = async (req, res) => {
         return res.status(500).json({ error: 'Error al capturar la orden en PayPal' });
     }
 };
+
 
 
 const cancelPayment = (req, res) => {
