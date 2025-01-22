@@ -11,16 +11,16 @@ const verificarYRegistrarUsuario = async (idToken, registrar = false) => {
     const userDoc = await userRef.get();
 
     if (userDoc.exists) {
+      const userData = userDoc.data();
       return {
         isValid: true,
         mensaje: 'El usuario ya existe',
-        usuario: userDoc.data(),
+        usuario: { ...userData, rol: userData.rol || '' }, // Incluir el rol aunque no esté definido
         registrado: false
       };
     }
-
     if (registrar) {
-      const newUser = { name, email, picture };
+      const newUser = { name, email, picture, rol: 'cliente' }; // Asignar un rol por defecto
       await userRef.set(newUser);
       return {
         isValid: true,
