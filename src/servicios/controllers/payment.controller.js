@@ -106,6 +106,7 @@ const captureOrder = async (req, res) => {
 
         // Verificar stock y reducirlo dentro de una transacción en Firestore
         const db = admin.firestore();
+        const productosEnConflicto = [];
 
         try {
             await db.runTransaction(async (transaction) => {
@@ -115,7 +116,8 @@ const captureOrder = async (req, res) => {
                     );
 
                     if (productoQuerySnapshot.empty) {
-                        throw new Error(`Producto con nombre ${item.name} no encontrado en la base de datos`);
+                        productosEnConflicto.push(item.nombre);
+                        continue;
                     }
 
                     const productoDoc = productoQuerySnapshot.docs[0];
@@ -123,7 +125,8 @@ const captureOrder = async (req, res) => {
                     const unidadesActuales = productoData.unidades || 0;
 
                     if (unidadesActuales < item.quantity) {
-                        throw new Error(`Stock insuficiente para el producto ${item.name}`);
+                        productosEnConflicto.push(item.nombre);
+                        continue;
                     }
 
                     // Reducir las unidades del producto en la base de datos de manera atómica
@@ -132,9 +135,13 @@ const captureOrder = async (req, res) => {
                     });
                 }
             });
+            if (productosEnConflicto.length > 0) {
+                const productosQuery = encodeURIComponent(productosEnConflicto.join(','));
+                return res.redirect(`https://marketgog5.netlify.app/transaccion-fallida?productos=${productosQuery}`);
+            }
         } catch (error) {
             console.error('Error al reducir el stock:', error.message);
-            return res.status(400).json({ error: error.message });
+            return res.redirect('https://marketgog5.netlify.app/transaccion-fallida?error=stock_error');
         }
 
         // Datos de la factura
@@ -202,10 +209,11 @@ const captureOrder = async (req, res) => {
         });
 
         // Redirigir al frontend después de capturar el pago y actualizar los datos
-        return res.redirect('https://marketgog5.netlify.app/home');
+
+        return res.redirect('https://marketgog5.netlify.app/transaccion-exitosa');
     } catch (error) {
         console.error('Error al capturar la orden:', error.response?.data || error.message);
-        return res.status(500).json({ error: 'Error al capturar la orden en PayPal' });
+        return res.redirect('https://marketgog5.netlify.app/transaccion-fallida?error=otro_problema');
     }
 };
 
