@@ -104,6 +104,9 @@ const captureOrder = async (req, res) => {
         const metodoPago = 'PayPal';
         const emailUserMarketgo = tempemailUserMarketgo;
 
+        console.log('Procesando los siguientes productos del carrito:', cartItems);
+
+
         // Verificar stock y reducirlo dentro de una transacción en Firestore
         const db = admin.firestore();
         const productosEnConflicto = [];
@@ -111,12 +114,14 @@ const captureOrder = async (req, res) => {
         try {
             await db.runTransaction(async (transaction) => {
                 for (const item of cartItems) {
+                    console.log(`Verificando stock para producto: ${item.name}`);
                     const productoQuerySnapshot = await transaction.get(
                         db.collection('producto').where('nombre', '==', item.name)
                     );
 
                     if (productoQuerySnapshot.empty) {
-                        productosEnConflicto.push(item.nombre);
+                        console.log(`Producto no encontrado en la base de datos: ${item.name}`);
+                        productosEnConflicto.push(item.name);
                         continue;
                     }
 
@@ -125,17 +130,20 @@ const captureOrder = async (req, res) => {
                     const unidadesActuales = productoData.unidades || 0;
 
                     if (unidadesActuales < item.quantity) {
-                        productosEnConflicto.push(item.nombre);
+                        console.log(`Stock insuficiente para producto: ${item.name}, Unidades disponibles: ${unidadesActuales}, Requeridas: ${item.quantity}`);
+                        productosEnConflicto.push(item.name);
                         continue;
                     }
 
                     // Reducir las unidades del producto en la base de datos de manera atómica
+                    console.log(`Actualizando stock para producto: ${item.name}, Unidades actuales: ${unidadesActuales}, Nuevas unidades: ${unidadesActuales - item.quantity}`);
                     transaction.update(productoDoc.ref, {
                         unidades: unidadesActuales - item.quantity,
                     });
                 }
             });
             if (productosEnConflicto.length > 0) {
+                console.log('Productos en conflicto:', productosEnConflicto);
                 const productosQuery = encodeURIComponent(productosEnConflicto.join(','));
                 return res.redirect(`https://marketgog5.netlify.app/transaccion-fallida?productos=${productosQuery}`);
             }
