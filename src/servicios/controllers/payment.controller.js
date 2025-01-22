@@ -149,7 +149,7 @@ const captureOrder = async (req, res) => {
                 for (const item of productosConStock) {
                     console.log(`Actualizando stock para producto: ${item.name}`);
                     transaction.update(item.docRef, {
-                        unidades: item.unidades - item.quantity,
+                        unidades: item.unidadesActuales - item.quantity,
                     });
                 }
             });
