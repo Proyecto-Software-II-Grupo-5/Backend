@@ -107,49 +107,51 @@ const captureOrder = async (req, res) => {
         console.log('Procesando los siguientes productos del carrito:', cartItems);
 
 
-        // Verificar stock y reducirlo dentro de una transacción en Firestore
         const db = admin.firestore();
-        const productosEnConflicto = [];
-
-        // Identificar productos sin stock
         const productosSinStock = [];
         const productosConStock = [];
-        for (const item of cartItems) {
-            const productoQuerySnapshot = await db
-                .collection('producto')
-                .where('nombre', '==', item.name)
-                .get();
 
-            if (productoQuerySnapshot.empty) {
-                console.log(`Producto no encontrado en la base de datos: ${item.name}`);
+         // Leer todos los productos antes de la transacción
+         const productosSnapshot = await db
+         .collection('producto')
+         .where('nombre', 'in', cartItems.map(item => item.name))
+         .get();       
+
+        // Validar stock antes de escribir
+        for (const item of cartItems) {
+            const productoDoc = productosSnapshot.docs.find(doc => doc.data().nombre === item.name);
+            if (!productoDoc) {
+                console.log(`Producto no encontrado: ${item.name}`);
                 productosSinStock.push(item.name);
                 continue;
             }
 
-            const productoData = productoQuerySnapshot.docs[0].data();
+            const productoData = productoDoc.data();
             const unidadesActuales = productoData.unidades || 0;
 
             if (unidadesActuales < item.quantity) {
                 console.log(`Stock insuficiente para producto: ${item.name}, Unidades disponibles: ${unidadesActuales}, Requeridas: ${item.quantity}`);
                 productosSinStock.push(item.name);
             } else {
-                productosConStock.push({ ...item, docRef: productoQuerySnapshot.docs[0].ref });
+                productosConStock.push({ ...item, docRef: productoDoc.ref });
             }
         }
 
-        // Redirigir si hay productos sin stock
+        // Si hay productos sin stock, redirigir
         if (productosSinStock.length > 0) {
-            console.log('Productos en conflicto:', productosSinStock);
+            console.log('Productos sin stock:', productosSinStock);
             const productosQuery = encodeURIComponent(productosSinStock.join(','));
             return res.redirect(`https://marketgog5.netlify.app/transaccion-fallida?productos=${productosQuery}`);
         }
-        // Reducir el stock de los productos disponibles
+
+        // Transacción para reducir el stock
         try {
             await db.runTransaction(async (transaction) => {
                 for (const item of productosConStock) {
                     console.log(`Actualizando stock para producto: ${item.name}`);
                     const productoData = (await transaction.get(item.docRef)).data();
                     const unidadesActuales = productoData.unidades || 0;
+
                     transaction.update(item.docRef, {
                         unidades: unidadesActuales - item.quantity,
                     });
