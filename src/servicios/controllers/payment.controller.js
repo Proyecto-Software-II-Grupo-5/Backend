@@ -86,155 +86,19 @@ const createOrder = async (req, res) => {
     }
 };
 
-const captureOrder = async (req, res) => {
-    const { token } = req.query;
-
-    try {
-        const access_token = await getPayPalToken();
-        const response = await axios.post(`${PAYPAL_API}/v2/checkout/orders/${token}/capture`, {}, {
-            headers: {
-                Authorization: `Bearer ${access_token}`,
-                'Content-Type': 'application/json',
-            },
-        });
-
-        const datosCliente = tempClientData;
-        const cartItems = tempCartData;
-        const cartSummary = tempCartSummary;
-        const metodoPago = 'PayPal';
-        const emailUserMarketgo = tempemailUserMarketgo;
-
-        console.log('Procesando los siguientes productos del carrito:', cartItems);
-
-
-        const db = admin.firestore();
-        const productosSinStock = [];
-        const productosConStock = [];
-
-         // Leer todos los productos antes de la transacción
-         const productosSnapshot = await db
-         .collection('producto')
-         .where('nombre', 'in', cartItems.map(item => item.name))
-         .get();       
-
-        // Validar stock antes de escribir
-        for (const item of cartItems) {
-            const productoDoc = productosSnapshot.docs.find(doc => doc.data().nombre === item.name);
-            if (!productoDoc) {
-                console.log(`Producto no encontrado: ${item.name}`);
-                productosSinStock.push(item.name);
-                continue;
-            }
-
-            const productoData = productoDoc.data();
-            const unidadesActuales = productoData.unidades || 0;
-
-            if (unidadesActuales < item.quantity) {
-                console.log(`Stock insuficiente para producto: ${item.name}, Unidades disponibles: ${unidadesActuales}, Requeridas: ${item.quantity}`);
-                productosSinStock.push(item.name);
-            } else {
-                productosConStock.push({ ...item, docRef: productoDoc.ref });
-            }
-        }
-
-        // Si hay productos sin stock, redirigir
-        if (productosSinStock.length > 0) {
-            console.log('Productos sin stock:', productosSinStock);
-            const productosQuery = encodeURIComponent(productosSinStock.join(','));
-            return res.redirect(`https://marketgog5.netlify.app/transaccion-fallida?productos=${productosQuery}`);
-        }
-
-        // Transacción para reducir el stock
-        try {
-            await db.runTransaction(async (transaction) => {
-                for (const item of productosConStock) {
-                    console.log(`Actualizando stock para producto: ${item.name}`);
-                    const productoData = (await transaction.get(item.docRef)).data();
-                    const unidadesActuales = productoData.unidades || 0;
-
-                    transaction.update(item.docRef, {
-                        unidades: unidadesActuales - item.quantity,
-                    });
-                }
+try {
+    await db.runTransaction(async (transaction) => {
+        for (const item of productosConStock) {
+            console.log(`Actualizando stock para producto: ${item.name}`);
+            transaction.update(item.docRef, {
+                unidades: item.unidadesActuales - item.quantity,
             });
-        } catch (error) {
-            console.error('Error al reducir el stock:', error.message);
-            return res.redirect('https://marketgog5.netlify.app/transaccion-fallida?error=stock_error');
         }
-
-        // Datos de la factura
-        const facturaData = {
-            emailusuariomarketgo: emailUserMarketgo,
-            id: response.data.id,
-            status: response.data.status,
-            email_address: response.data.payer.email_address,
-            account_id: response.data.payer.payer_id,
-            account_status: response.data.payment_source.paypal.account_status,
-            name: response.data.payer.name,
-            address: response.data.payer.address,
-            datosCliente,
-            cartItems: cartItems.map(item => ({
-                name: item.name,
-                price: item.price,
-                quantity: item.quantity,
-                iva: item.iva,
-                subtotal: item.subtotal,
-                total: item.total,
-                ivaIndicador: item.ivaIndicador,
-            })),
-            cartSummary: {
-                subtotal: cartSummary.subtotal || 0,
-                iva: cartSummary.iva || 0,
-                total: cartSummary.total || 0,
-            },
-            metodoPago,
-        };
-
-        // Guardar factura en Firebase
-        const facturaRef = db.collection('factura').doc(facturaData.id);
-        console.log('Guardando la factura en Firebase con los datos:', facturaData);
-        await facturaRef.set(facturaData);
-
-        // Enviar el correo con la factura al usuario
-        console.log('Preparando los datos para enviar el correo:', {
-            numero: facturaData.id,
-            fecha: new Date().toLocaleDateString(),
-            cliente: datosCliente.nombre || 'N/A',
-            cedula: datosCliente.cedula || 'N/A',
-            telefono: datosCliente.telefono || 'N/A',
-            correo: datosCliente.correo || 'N/A',
-            direccion: datosCliente.direccion || 'N/A',
-            productos: facturaData.cartItems,
-            subtotal: facturaData.cartSummary.subtotal,
-            iva: facturaData.cartSummary.iva,
-            total: facturaData.cartSummary.total,
-            metodoPago: facturaData.metodoPago,
-        });
-
-        await enviarCorreoConPDF(emailUserMarketgo, {
-            numero: facturaData.id,
-            fecha: new Date().toLocaleDateString(),
-            cliente: datosCliente.nombre || 'N/A',
-            cedula: datosCliente.cedula || 'N/A',
-            telefono: datosCliente.telefono || 'N/A',
-            correo: datosCliente.correo || 'N/A',
-            direccion: datosCliente.direccion || 'N/A',
-            productos: facturaData.cartItems,
-            subtotal: facturaData.cartSummary.subtotal,
-            iva: facturaData.cartSummary.iva,
-            total: facturaData.cartSummary.total,
-            metodoPago: facturaData.metodoPago,
-        });
-
-        // Redirigir al frontend después de capturar el pago y actualizar los datos
-
-        return res.redirect('https://marketgog5.netlify.app/transaccion-exitosa');
-    } catch (error) {
-        console.error('Error al capturar la orden:', error.response?.data || error.message);
-        return res.redirect('https://marketgog5.netlify.app/transaccion-fallida?error=otro_problema');
-    }
-};
-
+    });
+} catch (error) {
+    console.error('Error al reducir el stock:', error.message);
+    return res.redirect('https://marketgog5.netlify.app/transaccion-fallida?error=stock_error');
+}
 
 
 const cancelPayment = (req, res) => {
