@@ -86,19 +86,6 @@ const createOrder = async (req, res) => {
     }
 };
 
-try {
-    await db.runTransaction(async (transaction) => {
-        for (const item of productosConStock) {
-            console.log(`Actualizando stock para producto: ${item.name}`);
-            transaction.update(item.docRef, {
-                unidades: item.unidadesActuales - item.quantity,
-            });
-        }
-    });
-} catch (error) {
-    console.error('Error al reducir el stock:', error.message);
-    return res.redirect('https://marketgog5.netlify.app/transaccion-fallida?error=stock_error');
-}
 const captureOrder = async (req, res) => {
     const { token } = req.query;
 
@@ -127,8 +114,9 @@ const captureOrder = async (req, res) => {
         const productosSnapshot = await db
             .collection('producto')
             .where('nombre', 'in', cartItems.map(item => item.name))
-            .get();
+            .get(); 
 
+        // Validar stock antes de escribir
         for (const item of cartItems) {
             const productoDoc = productosSnapshot.docs.find(doc => doc.data().nombre === item.name);
             if (!productoDoc) {
@@ -161,7 +149,7 @@ const captureOrder = async (req, res) => {
                 for (const item of productosConStock) {
                     console.log(`Actualizando stock para producto: ${item.name}`);
                     transaction.update(item.docRef, {
-                        unidades: item.unidadesActuales - item.quantity,
+                        unidades: item.unidades - item.quantity,
                     });
                 }
             });
@@ -204,6 +192,21 @@ const captureOrder = async (req, res) => {
         await facturaRef.set(facturaData);
 
         // Enviar el correo con la factura al usuario
+        console.log('Preparando los datos para enviar el correo:', {
+            numero: facturaData.id,
+            fecha: new Date().toLocaleDateString(),
+            cliente: datosCliente.nombre || 'N/A',
+            cedula: datosCliente.cedula || 'N/A',
+            telefono: datosCliente.telefono || 'N/A',
+            correo: datosCliente.correo || 'N/A',
+            direccion: datosCliente.direccion || 'N/A',
+            productos: facturaData.cartItems,
+            subtotal: facturaData.cartSummary.subtotal,
+            iva: facturaData.cartSummary.iva,
+            total: facturaData.cartSummary.total,
+            metodoPago: facturaData.metodoPago,
+        });
+
         await enviarCorreoConPDF(emailUserMarketgo, {
             numero: facturaData.id,
             fecha: new Date().toLocaleDateString(),
@@ -219,12 +222,15 @@ const captureOrder = async (req, res) => {
             metodoPago: facturaData.metodoPago,
         });
 
+        // Redirigir al frontend después de capturar el pago y actualizar los datos
+
         return res.redirect('https://marketgog5.netlify.app/transaccion-exitosa');
     } catch (error) {
         console.error('Error al capturar la orden:', error.response?.data || error.message);
         return res.redirect('https://marketgog5.netlify.app/transaccion-fallida?error=otro_problema');
     }
 };
+
 
 
 const cancelPayment = (req, res) => {
