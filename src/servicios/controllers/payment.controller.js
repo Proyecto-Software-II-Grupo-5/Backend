@@ -111,42 +111,50 @@ const captureOrder = async (req, res) => {
         const db = admin.firestore();
         const productosEnConflicto = [];
 
+        // Identificar productos sin stock
+        const productosSinStock = [];
+        const productosConStock = [];
+        for (const item of cartItems) {
+            const productoQuerySnapshot = await db
+                .collection('producto')
+                .where('nombre', '==', item.name)
+                .get();
+
+            if (productoQuerySnapshot.empty) {
+                console.log(`Producto no encontrado en la base de datos: ${item.name}`);
+                productosSinStock.push(item.name);
+                continue;
+            }
+
+            const productoData = productoQuerySnapshot.docs[0].data();
+            const unidadesActuales = productoData.unidades || 0;
+
+            if (unidadesActuales < item.quantity) {
+                console.log(`Stock insuficiente para producto: ${item.name}, Unidades disponibles: ${unidadesActuales}, Requeridas: ${item.quantity}`);
+                productosSinStock.push(item.name);
+            } else {
+                productosConStock.push({ ...item, docRef: productoQuerySnapshot.docs[0].ref });
+            }
+        }
+
+        // Redirigir si hay productos sin stock
+        if (productosSinStock.length > 0) {
+            console.log('Productos en conflicto:', productosSinStock);
+            const productosQuery = encodeURIComponent(productosSinStock.join(','));
+            return res.redirect(`https://marketgog5.netlify.app/transaccion-fallida?productos=${productosQuery}`);
+        }
+        // Reducir el stock de los productos disponibles
         try {
             await db.runTransaction(async (transaction) => {
-                for (const item of cartItems) {
-                    console.log(`Verificando stock para producto: ${item.name}`);
-                    const productoQuerySnapshot = await transaction.get(
-                        db.collection('producto').where('nombre', '==', item.name)
-                    );
-
-                    if (productoQuerySnapshot.empty) {
-                        console.log(`Producto no encontrado en la base de datos: ${item.name}`);
-                        productosEnConflicto.push(item.name);
-                        continue;
-                    }
-
-                    const productoDoc = productoQuerySnapshot.docs[0];
-                    const productoData = productoDoc.data();
+                for (const item of productosConStock) {
+                    console.log(`Actualizando stock para producto: ${item.name}`);
+                    const productoData = (await transaction.get(item.docRef)).data();
                     const unidadesActuales = productoData.unidades || 0;
-
-                    if (unidadesActuales < item.quantity) {
-                        console.log(`Stock insuficiente para producto: ${item.name}, Unidades disponibles: ${unidadesActuales}, Requeridas: ${item.quantity}`);
-                        productosEnConflicto.push(item.name);
-                        continue;
-                    }
-
-                    // Reducir las unidades del producto en la base de datos de manera atómica
-                    console.log(`Actualizando stock para producto: ${item.name}, Unidades actuales: ${unidadesActuales}, Nuevas unidades: ${unidadesActuales - item.quantity}`);
-                    transaction.update(productoDoc.ref, {
+                    transaction.update(item.docRef, {
                         unidades: unidadesActuales - item.quantity,
                     });
                 }
             });
-            if (productosEnConflicto.length > 0) {
-                console.log('Productos en conflicto:', productosEnConflicto);
-                const productosQuery = encodeURIComponent(productosEnConflicto.join(','));
-                return res.redirect(`https://marketgog5.netlify.app/transaccion-fallida?productos=${productosQuery}`);
-            }
         } catch (error) {
             console.error('Error al reducir el stock:', error.message);
             return res.redirect('https://marketgog5.netlify.app/transaccion-fallida?error=stock_error');
