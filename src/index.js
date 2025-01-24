@@ -77,7 +77,7 @@ app.use('/buscaradmin', buscarAdmin);
 app.use('/eliminaradmin', eliminarAdmin);
 app.use('/buscarusuario', buscarUsuario); // Usa el nuevo servicio
 app.use('/invitacion', invitacion); 
-app.use('/agregaradmin', agregardmin);
+app.use('/agregaradmin', agregaradmin);
 // Ruta básica para verificar que el servidor está corriendo
 app.get('/', (req, res) => {
   res.send('Bienvenido al servidor backend.');
