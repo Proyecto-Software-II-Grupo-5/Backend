@@ -42,6 +42,7 @@ const validarDatos = require('./servicios/validarDatos');
 const createproduct = require('./servicios/crearproducto');
 const modifyproduct = require('./servicios/modificarproducto');
 const deleteproduct = require('./servicios/eliminarproducto');
+const buscarAdmin = require('./servicios/buscaradmin');
 
 // Middleware de rutas de pagos
 app.use('/payment', paymentRoutes);
@@ -68,6 +69,7 @@ app.use('/validacionDatos', validarDatos);
 app.use('/createproduct', createproduct);
 app.use('/modifyproduct', modifyproduct);
 app.use('/deleteproduct', deleteproduct);
+app.use('/buscaradmin', buscarAdmin);
 
 // Ruta básica para verificar que el servidor está corriendo
 app.get('/', (req, res) => {
