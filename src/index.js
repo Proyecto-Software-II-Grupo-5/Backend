@@ -43,6 +43,7 @@ const createproduct = require('./servicios/crearproducto');
 const modifyproduct = require('./servicios/modificarproducto');
 const deleteproduct = require('./servicios/eliminarproducto');
 const buscarAdmin = require('./servicios/buscaradmin');
+const eliminarAdmin = require('./servicios/eliminaradmin');
 
 // Middleware de rutas de pagos
 app.use('/payment', paymentRoutes);
@@ -70,6 +71,7 @@ app.use('/createproduct', createproduct);
 app.use('/modifyproduct', modifyproduct);
 app.use('/deleteproduct', deleteproduct);
 app.use('/buscaradmin', buscarAdmin);
+app.use('/eliminaradmin', eliminarAdmin);
 
 // Ruta básica para verificar que el servidor está corriendo
 app.get('/', (req, res) => {
