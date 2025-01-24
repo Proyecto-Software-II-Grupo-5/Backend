@@ -44,6 +44,8 @@ const modifyproduct = require('./servicios/modificarproducto');
 const deleteproduct = require('./servicios/eliminarproducto');
 const buscarAdmin = require('./servicios/buscaradmin');
 const eliminarAdmin = require('./servicios/eliminaradmin');
+const buscarUsuario = require('./servicios/buscarusuario'); // Importa el nuevo servicio
+
 
 // Middleware de rutas de pagos
 app.use('/payment', paymentRoutes);
@@ -72,6 +74,7 @@ app.use('/modifyproduct', modifyproduct);
 app.use('/deleteproduct', deleteproduct);
 app.use('/buscaradmin', buscarAdmin);
 app.use('/eliminaradmin', eliminarAdmin);
+app.use('/buscarusuario', buscarUsuario); // Usa el nuevo servicio
 
 // Ruta básica para verificar que el servidor está corriendo
 app.get('/', (req, res) => {
