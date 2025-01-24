@@ -26,7 +26,7 @@ router.post('/', async (req, res) => {
 
     try {
         const info = await transporter.sendMail({
-            from: 'marketgo@gmail.com',
+            from: 'https://marketgog5.netlify.app',
             to: email,
             subject: 'Invitación a MarketGo',
             html: `<p>¡Únete a MarketGo! Haz clic en el siguiente enlace para acceder:</p>
