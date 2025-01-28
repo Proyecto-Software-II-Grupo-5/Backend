@@ -224,7 +224,7 @@ const captureOrder = async (req, res) => {
 
         // Redirigir al frontend después de capturar el pago y actualizar los datos
 
-        return res.redirect('https://marketgog5.netlify.app/transaccion-exitosa');
+        return res.redirect('https://marketgog5.netlify.app/transaccion-exitosa?success=true');
     } catch (error) {
         console.error('Error al capturar la orden:', error.response?.data || error.message);
         return res.redirect('https://marketgog5.netlify.app/transaccion-fallida?error=otro_problema');
